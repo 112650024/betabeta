@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4fbf6" />
+    <meta
+      name="description"
+      content="CGM 血糖管理 App 的 Web 展示版，包含首頁、AI 洞察、貝友友善地圖與社群。"
+    />
+    <title>Beta｜不只控糖，更懂你的生活</title>
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" href="./assets/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell" aria-label="Beta 網頁示範版">
+      <section class="phone">
+        <div class="brand-mark"><span>Beta</span><span class="brand-tag">CGM</span></div>
+        <button class="settings-trigger" type="button" data-action="open-settings" aria-label="開啟設定">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+        <div class="status-pill">示範版</div>
+        <div id="screen" class="screen" aria-live="polite"></div>
+        <nav class="tab-bar" aria-label="主要頁籤">
+          <button class="tab-button active" type="button" data-screen="home">
+            <span class="tab-icon">⌂</span>
+            <span>首頁</span>
+          </button>
+          <button class="tab-button" type="button" data-screen="ai">
+            <span class="tab-icon">✦</span>
+            <span>AI</span>
+          </button>
+          <button class="tab-button" type="button" data-screen="record">
+            <span class="tab-icon">🍴</span>
+            <span>紀錄</span>
+          </button>
+          <button class="tab-button" type="button" data-screen="map">
+            <span class="tab-icon">⌖</span>
+            <span>地圖</span>
+          </button>
+          <button class="tab-button" type="button" data-screen="community">
+            <span class="tab-icon">☻</span>
+            <span>社群</span>
+          </button>
+          <button class="tab-button" type="button" data-screen="device">
+            <span class="tab-icon">⚙</span>
+            <span>裝置</span>
+          </button>
+        </nav>
+      </section>
+    </main>
+
+    <div class="onboarding-root" hidden aria-hidden="true">
+      <div class="onboarding-stage">
+        <button class="onboarding-skip" type="button" data-action="onboarding-skip">跳過</button>
+        <div class="onboarding-track" data-onboarding-track>
+          <article class="onboarding-slide" data-step="0">
+            <div class="onboarding-illus illus-welcome">
+              <span class="ob-circle big"></span>
+              <span class="ob-circle mid"></span>
+              <span class="ob-circle small"></span>
+              <div class="ob-emoji">🦉</div>
+            </div>
+            <h2>嗨，我是小貝</h2>
+            <p>Beta CGM App 陪你看懂血糖、理解身體的節奏。</p>
+            <p class="onboarding-sub">不只控糖，更懂你的生活。</p>
+          </article>
+          <article class="onboarding-slide" data-step="1">
+            <div class="onboarding-illus illus-glucose">
+              <div class="ob-gauge"><span class="ob-gauge-val">128</span><span class="ob-gauge-unit">mg/dL</span></div>
+              <svg viewBox="0 0 200 80" class="ob-wave" aria-hidden="true">
+                <path d="M0 50 Q 25 20, 50 40 T 100 30 T 150 50 T 200 35" stroke="var(--beta)" stroke-width="3" fill="none" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h2>即時血糖監測</h2>
+            <p>連線 CGM 感測器後，Beta 會持續追蹤你的血糖，並在偏高、偏低時溫柔提醒你。</p>
+          </article>
+          <article class="onboarding-slide" data-step="2">
+            <div class="onboarding-illus illus-ai">
+              <div class="ob-ai-card">
+                <span class="ob-ai-tag">AI 洞察</span>
+                <strong>30 分鐘後將回穩</strong>
+                <small>準確度 92.3%</small>
+              </div>
+              <div class="ob-spark spark-1"></div>
+              <div class="ob-spark spark-2"></div>
+              <div class="ob-spark spark-3"></div>
+            </div>
+            <h2>AI 洞察與預測</h2>
+            <p>Beta AI 引擎幫你看出餐後高峰、夜間低點，提早 30 分鐘預警，讓你比血糖更早一步。</p>
+          </article>
+          <article class="onboarding-slide" data-step="3">
+            <div class="onboarding-illus illus-community">
+              <div class="ob-peer peer-a">👩</div>
+              <div class="ob-peer peer-b">👨</div>
+              <div class="ob-peer peer-c">🧑</div>
+              <div class="ob-heart">♥</div>
+            </div>
+            <h2>找懂你的人</h2>
+            <p>貝友社群、互助圈、友善地圖，把照顧自己這件事，變成有人陪的事情。</p>
+          </article>
+        </div>
+        <div class="onboarding-footer">
+          <div class="onboarding-dots" data-onboarding-dots>
+            <span class="ob-dot active"></span>
+            <span class="ob-dot"></span>
+            <span class="ob-dot"></span>
+            <span class="ob-dot"></span>
+          </div>
+          <button class="onboarding-next" type="button" data-action="onboarding-next">下一步</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-root" hidden aria-hidden="true">
+      <div class="settings-backdrop" data-popup-close></div>
+      <aside class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <header class="settings-header">
+          <h2 id="settings-title">設定</h2>
+          <button class="settings-close" type="button" data-popup-close aria-label="關閉設定">×</button>
+        </header>
+
+        <section class="settings-account" data-action="open-login">
+          <div class="settings-avatar">👤</div>
+          <div class="settings-account-body">
+            <strong>登入 Beta 帳號</strong>
+            <small>同步雲端資料、跨裝置使用</small>
+          </div>
+          <span class="settings-arrow">›</span>
+        </section>
+
+        <h3 class="settings-group-title">顯示</h3>
+        <div class="settings-card">
+          <div class="settings-row settings-row-block">
+            <div class="settings-row-text">
+              <strong>字體大小</strong>
+              <small>調整 App 內所有文字大小</small>
+            </div>
+            <div class="font-size-options" role="radiogroup" aria-label="字體大小">
+              <button type="button" class="font-size-option" data-font-size="sm" role="radio" aria-checked="false">
+                <span class="fs-preview" style="font-size: 13px">小</span>
+                <span class="fs-label">小</span>
+              </button>
+              <button type="button" class="font-size-option active" data-font-size="md" role="radio" aria-checked="true">
+                <span class="fs-preview" style="font-size: 16px">中</span>
+                <span class="fs-label">標準</span>
+              </button>
+              <button type="button" class="font-size-option" data-font-size="lg" role="radio" aria-checked="false">
+                <span class="fs-preview" style="font-size: 19px">大</span>
+                <span class="fs-label">大</span>
+              </button>
+              <button type="button" class="font-size-option" data-font-size="xl" role="radio" aria-checked="false">
+                <span class="fs-preview" style="font-size: 22px">特</span>
+                <span class="fs-label">特大</span>
+              </button>
+            </div>
+          </div>
+
+          <button type="button" class="settings-row" data-action="dev">
+            <div class="settings-row-text">
+              <strong>語言</strong>
+              <small>繁體中文</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+
+          <button type="button" class="settings-row" data-action="dev">
+            <div class="settings-row-text">
+              <strong>外觀主題</strong>
+              <small>跟隨系統</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+        </div>
+
+        <h3 class="settings-group-title">健康與資料</h3>
+        <div class="settings-card">
+          <button type="button" class="settings-row" data-action="dev">
+            <div class="settings-row-text">
+              <strong>血糖單位</strong>
+              <small>mg/dL</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+          <button type="button" class="settings-row" data-action="dev">
+            <div class="settings-row-text">
+              <strong>個人血糖目標</strong>
+              <small>70 – 180 mg/dL</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+          <button type="button" class="settings-row" data-action="dev">
+            <div class="settings-row-text">
+              <strong>CGM 裝置管理</strong>
+              <small>Bionime CGM-T1 已配對</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+          <button type="button" class="settings-row" data-action="dev">
+            <div class="settings-row-text">
+              <strong>匯出健康報告</strong>
+              <small>PDF · CSV · AGP</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+        </div>
+
+        <h3 class="settings-group-title">通知與隱私</h3>
+        <div class="settings-card">
+          <button type="button" class="settings-row" data-action="dev">
+            <div class="settings-row-text">
+              <strong>通知與提醒</strong>
+              <small>高低血糖、餐後追蹤、用藥提醒</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+          <button type="button" class="settings-row" data-action="dev">
+            <div class="settings-row-text">
+              <strong>隱私與資料權限</strong>
+              <small>誰能看到你的紀錄</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+          <button type="button" class="settings-row" data-action="dev">
+            <div class="settings-row-text">
+              <strong>緊急聯絡人</strong>
+              <small>低血糖時自動通知</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+        </div>
+
+        <h3 class="settings-group-title">其他</h3>
+        <div class="settings-card">
+          <button type="button" class="settings-row" data-action="dev">
+            <div class="settings-row-text">
+              <strong>關於 Beta</strong>
+              <small>版本 1.0.0 · 服務條款 · 隱私權</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+          <button type="button" class="settings-row" data-action="show-onboarding">
+            <div class="settings-row-text">
+              <strong>重新觀看新手導覽</strong>
+              <small>了解 Beta 的核心功能</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+          <button type="button" class="settings-row" data-action="dev">
+            <div class="settings-row-text">
+              <strong>幫助中心 / 聯絡我們</strong>
+              <small>常見問題、回報問題</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+          <button type="button" class="settings-row danger" data-action="dev">
+            <div class="settings-row-text">
+              <strong>登出</strong>
+              <small>清除本機資料並登出</small>
+            </div>
+            <span class="settings-arrow">›</span>
+          </button>
+        </div>
+
+        <p class="settings-footnote">Beta CGM App · 第十六組 藍脈科技</p>
+      </aside>
+    </div>
+
+    <div class="login-root" hidden aria-hidden="true">
+      <div class="login-backdrop" data-popup-close></div>
+      <section class="login-panel" role="dialog" aria-modal="true" aria-labelledby="login-title">
+        <button class="login-close" type="button" data-popup-close aria-label="關閉登入">×</button>
+        <div class="login-hero">
+          <div class="login-logo">
+            <span class="login-logo-brand">Beta</span>
+            <span class="login-logo-tag">CGM</span>
+          </div>
+          <h2 id="login-title">歡迎回來</h2>
+          <p>登入以同步你的 CGM 資料、AI 洞察與貝友社群。</p>
+        </div>
+
+        <form class="login-form" onsubmit="return false">
+          <label class="login-field">
+            <span class="login-field-label">Email</span>
+            <input type="email" placeholder="you@example.com" autocomplete="email" />
+          </label>
+          <label class="login-field">
+            <span class="login-field-label">密碼</span>
+            <input type="password" placeholder="輸入密碼" autocomplete="current-password" />
+          </label>
+          <div class="login-meta-row">
+            <label class="login-remember">
+              <input type="checkbox" checked />
+              <span>保持登入</span>
+            </label>
+            <button type="button" class="login-link" data-action="dev">忘記密碼？</button>
+          </div>
+          <button type="button" class="login-primary" data-action="dev">登入</button>
+        </form>
+
+        <div class="login-divider"><span>或使用第三方登入</span></div>
+
+        <div class="login-social">
+          <button type="button" class="login-social-btn apple" data-action="dev">
+            <span class="social-ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16.4 1.7c0 1.2-.5 2.4-1.3 3.2-.9.9-2.2 1.6-3.4 1.5-.1-1.1.5-2.4 1.3-3.2.9-1 2.2-1.6 3.4-1.5zM20.8 17.6c-.6 1.3-.9 1.9-1.6 3-1 1.6-2.5 3.6-4.3 3.6-1.6 0-2.1-1-4.3-1-2.2 0-2.7 1-4.3 1-1.8 0-3.2-1.8-4.2-3.4-2.9-4.6-3.2-9.9-1.4-12.8 1.2-2 3.1-3.2 4.9-3.2 1.9 0 3.1 1 4.6 1 1.5 0 2.4-1 4.6-1 1.7 0 3.5.9 4.8 2.5-4.2 2.3-3.5 8.3.2 10.3z"/></svg>
+            </span>
+            使用 Apple 登入
+          </button>
+          <button type="button" class="login-social-btn google" data-action="dev">
+            <span class="social-ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path fill="#EA4335" d="M12 5.4c1.6 0 3 .6 4.1 1.6l3-3C17.3 2.3 14.8 1.2 12 1.2c-4.2 0-7.8 2.4-9.6 5.9l3.5 2.7C6.8 7.2 9.2 5.4 12 5.4z"/><path fill="#4285F4" d="M22.8 12.3c0-.7-.1-1.4-.2-2.1H12v4.1h6.1c-.3 1.4-1 2.6-2.2 3.4l3.4 2.6c2-1.9 3.5-4.6 3.5-8z"/><path fill="#FBBC04" d="M5.9 14.2c-.2-.6-.3-1.4-.3-2.2s.1-1.5.3-2.2L2.4 7.1C1.6 8.6 1.2 10.3 1.2 12s.4 3.4 1.2 4.9l3.5-2.7z"/><path fill="#34A853" d="M12 22.8c2.8 0 5.2-.9 6.9-2.6l-3.4-2.6c-.9.6-2.1 1-3.5 1-2.8 0-5.2-1.8-6.1-4.4L2.4 17c1.8 3.5 5.4 5.8 9.6 5.8z"/></svg>
+            </span>
+            使用 Google 登入
+          </button>
+        </div>
+
+        <p class="login-signup">還沒有帳號？<button type="button" class="login-link strong" data-action="dev">免費註冊</button></p>
+        <p class="login-disclaimer">登入即表示同意 Beta 的<button type="button" class="login-link inline" data-action="dev">服務條款</button>與<button type="button" class="login-link inline" data-action="dev">隱私權政策</button>。</p>
+      </section>
+    </div>
+
+    <div class="dev-popup-root" hidden aria-hidden="true">
+      <div class="dev-popup-backdrop" data-popup-close></div>
+      <div class="dev-popup" role="dialog" aria-modal="true" aria-labelledby="dev-popup-title">
+        <div class="dev-popup-emoji">🛠️</div>
+        <h3 id="dev-popup-title">這個功能還在開發中</h3>
+        <p>Beta 還是雛形，這個按鈕還沒做完。</p>
+        <p class="dev-popup-cta">如果你喜歡我們的方向，<strong>請給我們鼓勵、投我們一票！</strong></p>
+        <button class="dev-popup-vote" type="button" data-popup-close>給 Beta 一個鼓勵！</button>
+        <button class="dev-popup-close" type="button" data-popup-close aria-label="關閉">×</button>
+      </div>
+    </div>
+
+    <div class="cgm-popup-root" hidden aria-hidden="true">
+      <div class="cgm-popup-backdrop" data-popup-close></div>
+      <div class="cgm-popup" role="dialog" aria-modal="true" aria-labelledby="cgm-popup-title">
+        <button class="dev-popup-close cgm-popup-close" type="button" data-popup-close aria-label="關閉">×</button>
+        <div class="cgm-popup-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <h3 id="cgm-popup-title">已連線到 Bionime CGM-T1</h3>
+        <p>連線品質良好，正在同步過去 24 小時血糖資料…</p>
+        <div class="cgm-stats-row">
+          <div class="cgm-stat">
+            <span class="cgm-stat-label">電量</span>
+            <span class="cgm-stat-value">78%</span>
+          </div>
+          <div class="cgm-stat">
+            <span class="cgm-stat-label">訊號</span>
+            <span class="cgm-stat-value good">強</span>
+          </div>
+          <div class="cgm-stat">
+            <span class="cgm-stat-label">已配對</span>
+            <span class="cgm-stat-value">12 天</span>
+          </div>
+        </div>
+        <button class="cgm-popup-cta" type="button" data-popup-close>開始監測</button>
+      </div>
+    </div>
+
+    <div class="paywall-popup-root" hidden aria-hidden="true">
+      <div class="paywall-popup-backdrop" data-popup-close></div>
+      <div class="paywall-popup" role="dialog" aria-modal="true" aria-labelledby="paywall-popup-title">
+        <button class="dev-popup-close paywall-popup-close" type="button" data-popup-close aria-label="關閉">×</button>
+        <div class="paywall-icon">✦</div>
+        <span class="paywall-tag">免費版本日額度已用完</span>
+        <h3 id="paywall-popup-title">升級 Beta，AI 用到飽</h3>
+        <p class="paywall-sub">你今天已用完 <strong>3 次</strong>免費 AI 問答。選一個適合你的方案，繼續使用 Beta AI 引擎完整能力。</p>
+
+        <div class="paywall-tiers">
+          <button type="button" class="paywall-tier recommended" data-paywall-tier="advance" data-action="dev">
+            <span class="paywall-tier-badge">最多人選</span>
+            <div class="paywall-tier-head">
+              <strong>Beta 進階</strong>
+              <small>主力付費方案</small>
+            </div>
+            <div class="paywall-tier-price">
+              <span class="paywall-currency">NT$</span>
+              <span class="paywall-amount">399</span>
+              <span class="paywall-unit">/ 月</span>
+            </div>
+            <ul class="paywall-tier-feats">
+              <li>✓ 無限次 AI 洞察與每日報告</li>
+              <li>✓ 30 分鐘血糖預測（含信心區間）</li>
+              <li>✓ 貝友友善地圖完整解鎖</li>
+              <li>✓ 社群圈子與貝友配對</li>
+              <li>✓ 週報、月報 PDF 匯出</li>
+            </ul>
+            <span class="paywall-tier-trial">前 7 天免費試用</span>
+          </button>
+
+          <button type="button" class="paywall-tier" data-paywall-tier="medical" data-action="dev">
+            <span class="paywall-tier-badge medical">醫療級</span>
+            <div class="paywall-tier-head">
+              <strong>Beta 醫療</strong>
+              <small>中重度需求 / 醫療諮詢</small>
+            </div>
+            <div class="paywall-tier-price">
+              <span class="paywall-currency">NT$</span>
+              <span class="paywall-amount">699</span>
+              <span class="paywall-unit">/ 月</span>
+            </div>
+            <ul class="paywall-tier-feats">
+              <li>✓ <strong>包含進階版所有功能</strong></li>
+              <li>✓ 每月線上衛教師諮詢 1 次</li>
+              <li>✓ 醫師可讀報告匯出（ATTD 共識）</li>
+              <li>✓ 個人化模型深度微調</li>
+              <li>✓ 緊急聯絡人自動通報</li>
+            </ul>
+            <span class="paywall-tier-trial">前 14 天免費試用</span>
+          </button>
+        </div>
+
+        <button class="paywall-cta" type="button" data-action="dev">選擇方案，繼續問 AI</button>
+        <button class="paywall-secondary" type="button" data-popup-close>明天再說</button>
+        <p class="paywall-foot">免費版仍可使用基本血糖紀錄、TIR、社群閱讀。</p>
+      </div>
+    </div>
+
+    <div class="restaurant-popup-root" hidden aria-hidden="true">
+      <div class="restaurant-popup-backdrop" data-popup-close></div>
+      <div class="restaurant-popup" role="dialog" aria-modal="true" aria-labelledby="restaurant-popup-title">
+        <button class="dev-popup-close restaurant-popup-close" type="button" data-popup-close aria-label="關閉">×</button>
+        <div class="restaurant-popup-body"></div>
+      </div>
+    </div>
+
+    <div class="medical-popup-root" hidden aria-hidden="true">
+      <div class="medical-popup-backdrop" data-popup-close></div>
+      <div class="medical-popup" role="alertdialog" aria-modal="true" aria-labelledby="medical-popup-title">
+        <div class="medical-popup-icon" aria-hidden="true">⚠️</div>
+        <h3 id="medical-popup-title">血糖超出建議範圍</h3>
+        <p class="medical-popup-reading">目前血糖 <strong>202 mg/dL</strong>，已高於 180 警戒線。</p>
+        <ul class="medical-popup-steps">
+          <li>立即補充水分（白開水），避免含糖飲料</li>
+          <li>若你有依醫師指示的高血糖處理方案，請依照執行</li>
+          <li>持續高於 250 mg/dL 或出現噁心、意識模糊、呼吸異常，<strong>請立即就醫或聯絡照護者</strong></li>
+        </ul>
+        <p class="medical-popup-disclaimer">Beta 為健康管理工具，不取代醫療診斷。</p>
+        <div class="medical-popup-actions">
+          <button class="medical-popup-secondary" type="button" data-popup-close>我知道了</button>
+          <a class="medical-popup-primary" href="tel:119" data-popup-close>撥打 119</a>
+        </div>
+        <button class="dev-popup-close medical-popup-close" type="button" data-popup-close aria-label="關閉">×</button>
+      </div>
+    </div>
+
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>

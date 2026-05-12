@@ -1,0 +1,19 @@
+{
+  "name": "Beta｜不只控糖，更懂你的生活",
+  "short_name": "Beta",
+  "description": "Beta CGM 血糖管理 App 的網頁示範版。",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4fbf6",
+  "theme_color": "#16864b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

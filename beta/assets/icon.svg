@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="穩糖 Demo icon">
+  <rect width="512" height="512" rx="116" fill="#e8f8ed"/>
+  <path d="M126 308c42-146 88 74 130-24s72-124 130-80" fill="none" stroke="#16864b" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M327 202c18-46 38-54 59-30 10 12 19 28 29 50" fill="none" stroke="#df2929" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="133" cy="309" r="24" fill="#2c8dd8" stroke="#fff" stroke-width="12"/>
+  <circle cx="386" cy="176" r="24" fill="#df2929" stroke="#fff" stroke-width="12"/>
+  <circle cx="402" cy="222" r="20" fill="#111" stroke="#fff" stroke-width="10"/>
+  <text x="256" y="404" text-anchor="middle" font-family="Arial, sans-serif" font-size="58" font-weight="800" fill="#20372e">CGM</text>
+</svg>
