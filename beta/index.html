@@ -257,13 +257,34 @@
             </div>
             <span class="settings-arrow">›</span>
           </button>
-          <button type="button" class="settings-row danger" data-action="dev">
-            <div class="settings-row-text">
-              <strong>登出</strong>
-              <small>清除本機資料並登出</small>
-            </div>
-            <span class="settings-arrow">›</span>
-          </button>
+        </div>
+
+        <div data-settings-account-group hidden>
+          <h3 class="settings-group-title">帳號</h3>
+          <div class="settings-card settings-form-card">
+            <p class="settings-form-title">修改密碼</p>
+            <input type="password" class="profile-input" data-pw-current placeholder="目前密碼" autocomplete="current-password" />
+            <input type="password" class="profile-input" data-pw-new placeholder="新密碼（至少 6 碼）" autocomplete="new-password" />
+            <button class="login-primary" type="button" data-action="change-pw">更新密碼</button>
+            <p class="login-error" data-pw-msg style="display: none"></p>
+          </div>
+        </div>
+
+        <div data-settings-admin-group hidden>
+          <h3 class="settings-group-title">🛡️ 管理工具</h3>
+          <div class="settings-card settings-form-card">
+            <p class="settings-form-title">指派身分</p>
+            <p class="addfriend-hint">輸入對方的 ID，給他一個身分（不會改到對方的 ID）。官方與 Boss 都能用。</p>
+            <input type="text" class="profile-input" data-role-target placeholder="對方的 ID（例如 8392）" />
+            <select class="profile-input" data-role-select>
+              <option value="official">官方（金）</option>
+              <option value="quality">優質成員（綠）</option>
+              <option value="warning">警示帳戶（紅）</option>
+              <option value="none">移除身分（變一般成員）</option>
+            </select>
+            <button class="login-primary" type="button" data-action="role-assign">指派身分</button>
+            <p class="login-error" data-role-msg style="display: none"></p>
+          </div>
         </div>
 
         <p class="settings-footnote">Beta CGM App · 第十六組 藍脈科技</p>
@@ -401,6 +422,65 @@
       </section>
     </div>
 
+    <div class="inbox-popup-root login-root" hidden aria-hidden="true">
+      <div class="login-backdrop" data-popup-close></div>
+      <section class="login-panel inbox-popup" role="dialog" aria-modal="true" aria-labelledby="inbox-title">
+        <button class="login-close" type="button" data-popup-close aria-label="關閉">×</button>
+        <div class="login-hero"><h2 id="inbox-title">我的訊息</h2></div>
+        <div class="inbox-list" data-inbox-list></div>
+      </section>
+    </div>
+
+    <div class="circle-popup-root login-root" hidden aria-hidden="true">
+      <div class="login-backdrop" data-popup-close></div>
+      <section class="login-panel circle-popup" role="dialog" aria-modal="true" aria-labelledby="circle-title">
+        <button class="login-close" type="button" data-popup-close aria-label="關閉">×</button>
+        <div class="chat-head">
+          <span class="chat-avatar" data-circle-emoji>🫶</span>
+          <div>
+            <h2 id="circle-title" data-circle-name>互助圈</h2>
+            <span class="chat-status">聊天室 · 貼文牆</span>
+          </div>
+        </div>
+        <div class="circle-tabs">
+          <button class="circle-tab active" type="button" data-action="circle-tab" data-tab="chat">💬 聊天</button>
+          <button class="circle-tab" type="button" data-action="circle-tab" data-tab="posts">📋 貼文</button>
+        </div>
+        <div data-circle-pane="chat">
+          <div class="chat-messages" data-circle-messages></div>
+          <div class="chat-input-row">
+            <input type="text" class="chat-input" data-circle-text maxlength="1000" placeholder="跟大家說點什麼…" autocomplete="off" />
+            <button type="button" class="chat-send" data-action="circle-chat-send" aria-label="送出">➤</button>
+          </div>
+        </div>
+        <div data-circle-pane="posts" hidden>
+          <div class="circle-compose">
+            <textarea class="compose-textarea" data-circle-post-text rows="2" maxlength="500" placeholder="發一則主題貼文…"></textarea>
+            <button type="button" class="login-primary circle-post-btn" data-action="circle-post-submit">發布</button>
+          </div>
+          <div class="circle-posts" data-circle-posts></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="create-circle-popup-root login-root" hidden aria-hidden="true">
+      <div class="login-backdrop" data-popup-close></div>
+      <section class="login-panel" role="dialog" aria-modal="true" aria-labelledby="cc-title">
+        <button class="login-close" type="button" data-popup-close aria-label="關閉">×</button>
+        <div class="login-hero"><h2 id="cc-title">開一個互助圈</h2><p>建立後大家就能進來聊天、發主題貼文。</p></div>
+        <div class="login-form">
+          <label class="login-field"><span class="login-field-label">名稱</span><input type="text" class="profile-input" data-cc-name maxlength="20" placeholder="例如：夜間低點守望" /></label>
+          <label class="login-field"><span class="login-field-label">一句話介紹</span><input type="text" class="profile-input" data-cc-desc maxlength="60" placeholder="這個圈在聊什麼？" /></label>
+          <label class="login-field"><span class="login-field-label">圖示 emoji</span><input type="text" class="profile-input" data-cc-emoji maxlength="4" placeholder="🌙" /></label>
+          <p class="login-error" data-cc-msg style="display: none"></p>
+          <div class="compose-actions">
+            <button type="button" class="login-link" data-popup-close>取消</button>
+            <button type="button" class="login-primary" data-action="create-circle-submit">建立</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
     <div class="profile-popup-root login-root" hidden aria-hidden="true">
       <div class="login-backdrop" data-popup-close></div>
       <section class="login-panel profile-popup" role="dialog" aria-modal="true" aria-labelledby="profile-title">
@@ -409,6 +489,7 @@
           <span class="profile-avatar-big" data-profile-avatar>🦉</span>
           <h2 id="profile-title" data-profile-name>—</h2>
           <div data-profile-badge></div>
+          <p class="profile-bio-text" data-profile-bio hidden></p>
           <div class="profile-id-row">ID <strong data-profile-id>----</strong>
             <button class="profile-copy" type="button" data-action="copy-id">複製</button>
           </div>
@@ -423,29 +504,31 @@
           <button class="login-primary profile-mini-btn" type="button" data-action="save-name">儲存</button>
         </div>
 
-        <h3 class="settings-group-title">修改密碼</h3>
-        <div class="profile-stack">
-          <input type="password" class="profile-input" data-pw-current placeholder="目前密碼" autocomplete="current-password" />
-          <input type="password" class="profile-input" data-pw-new placeholder="新密碼（至少 6 碼）" autocomplete="new-password" />
-          <button class="login-primary" type="button" data-action="change-pw">更新密碼</button>
-          <p class="login-error" data-pw-msg style="display: none"></p>
+        <h3 class="settings-group-title">個人簡介</h3>
+        <div class="profile-row profile-row-bio">
+          <textarea class="profile-input profile-bio-input" data-profile-bio-input maxlength="150" rows="3" placeholder="寫點什麼介紹自己吧（150 字內）"></textarea>
+          <button class="login-primary profile-mini-btn" type="button" data-action="save-bio">儲存</button>
         </div>
 
-        <div data-boss-panel style="display: none">
-          <h3 class="settings-group-title">👑 Boss 管理面板</h3>
-          <p class="addfriend-hint">輸入某帳號目前的 ID，指派一個官方 ID 給他（會變成官方帳號）。</p>
-          <div class="profile-stack">
-            <input type="text" class="profile-input" data-boss-target placeholder="對方目前 ID（例如 8392）" />
-            <input type="text" class="profile-input" data-boss-newid placeholder="新的官方 ID（例如 005）" />
-            <button class="login-primary" type="button" data-action="boss-assign">設為官方</button>
-            <p class="login-error" data-boss-msg style="display: none"></p>
-          </div>
-        </div>
+        <p class="profile-hint-line">🔑 修改密碼、🛡️ 管理工具都移到「設定」裡囉。</p>
 
         <h3 class="settings-group-title">我的貼文</h3>
         <div class="profile-posts" data-profile-posts></div>
 
         <button class="settings-logout profile-logout" type="button" data-action="auth-logout">登出</button>
+      </section>
+    </div>
+
+    <div class="confirm-popup-root login-root" hidden aria-hidden="true">
+      <div class="login-backdrop" data-popup-close></div>
+      <section class="login-panel confirm-popup" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <div class="confirm-icon" data-confirm-icon>👋</div>
+        <h2 id="confirm-title" class="confirm-title" data-confirm-title>確定要登出嗎？</h2>
+        <p class="confirm-desc" data-confirm-desc>你隨時可以再登入回來</p>
+        <div class="confirm-actions">
+          <button class="confirm-cancel" type="button" data-popup-close>取消</button>
+          <button class="confirm-yes" type="button" data-confirm-yes>登出</button>
+        </div>
       </section>
     </div>
 

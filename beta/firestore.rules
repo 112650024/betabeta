@@ -22,9 +22,10 @@ service cloud.firestore {
     }
 
     // 使用者個人資料（含 betaId、avatar、official、role、friends）
+    // 本人可改自己的；boss 與官方版主可改別人的（用來指派身分組）
     match /users/{uid} {
       allow read: if true;
-      allow write: if isSignedIn() && (request.auth.uid == uid || isBoss());
+      allow write: if isSignedIn() && (request.auth.uid == uid || isBoss() || isOfficial());
     }
 
     // 社群貼文
@@ -73,6 +74,32 @@ service cloud.firestore {
           && request.resource.data.text is string
           && request.resource.data.text.size() > 0
           && request.resource.data.text.size() <= 1000;
+      }
+    }
+
+    // 互助圈：只有官方/boss 能開圈與改圈；圈內聊天與貼文所有登入者皆可參與
+    match /circles/{cid} {
+      allow read: if true;
+      allow create, update, delete: if isOfficial() || isBoss();
+
+      // 群組聊天室
+      match /messages/{mid} {
+        allow read: if true;
+        allow create: if isSignedIn()
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 1000;
+      }
+
+      // 主題貼文牆
+      match /posts/{pid} {
+        allow read: if true;
+        allow create: if isSignedIn()
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 500;
+        allow delete: if isSignedIn() && (resource.data.uid == request.auth.uid || isOfficial());
       }
     }
   }

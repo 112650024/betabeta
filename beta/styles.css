@@ -3171,6 +3171,47 @@ button.chip:active {
 }
 .login-close:hover { background: var(--beta-soft); color: var(--beta-dark); }
 
+/* 共用確認彈窗（登出 / 刪除等） */
+.confirm-popup {
+  width: min(100%, 340px);
+  text-align: center;
+  padding: 30px 26px 24px;
+}
+.confirm-icon {
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 10px;
+  animation: confirmIconPop 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes confirmIconPop {
+  0% { transform: scale(0.3) rotate(-12deg); opacity: 0; }
+  60% { transform: scale(1.15) rotate(6deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+.confirm-title { font-size: 19px; color: var(--ink); margin: 0 0 6px; }
+.confirm-desc { font-size: 13.5px; color: var(--muted); margin: 0 0 22px; line-height: 1.5; }
+.confirm-actions { display: flex; gap: 10px; }
+.confirm-cancel, .confirm-yes {
+  flex: 1;
+  padding: 13px 0;
+  border-radius: 14px;
+  font-size: 14.5px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 120ms ease, filter 150ms ease, background 150ms ease;
+}
+.confirm-cancel { border: 1.5px solid var(--line); background: #fff; color: var(--ink); }
+.confirm-cancel:hover { background: #f6f1e6; }
+.confirm-yes {
+  border: 0;
+  background: linear-gradient(135deg, var(--beta) 0%, var(--beta-dark) 100%);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(239, 124, 42, 0.4);
+}
+.confirm-yes:hover { filter: brightness(1.05); }
+.confirm-cancel:active, .confirm-yes:active { transform: scale(0.96); }
+
 .login-hero {
   text-align: center;
   margin-bottom: 22px;
@@ -3407,6 +3448,8 @@ button.chip:active {
 .reply-item strong { font-size: 13px; color: var(--ink); }
 .reply-item .reply-time { font-size: 11px; color: var(--muted); margin-left: 8px; }
 .reply-item p { font-size: 13.5px; color: var(--ink); margin-top: 4px; line-height: 1.5; }
+.reply-item-head { display: flex; align-items: center; }
+.reply-del-btn { margin-left: auto; font-size: 14px; }
 
 /* 回覆視窗 */
 .replies-original { margin-bottom: 12px; }
@@ -3511,18 +3554,130 @@ button.chip:active {
   display: inline-block;
   vertical-align: middle;
   margin-left: 4px;
-  padding: 2px 8px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #6b4b00;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  background: linear-gradient(100deg, #ffe79a 0%, #ffc107 25%, #fff4c2 50%, #ffc107 75%, #ffe79a 100%);
+  background-size: 200% auto;
+  box-shadow: 0 1px 4px rgba(212, 160, 23, 0.6);
+  animation: goldShine 2.6s linear infinite, badgeGlow 2.4s ease-in-out infinite;
+}
+.gold-badge-star {
+  display: inline-block;
+  margin: 0 1px;
+  animation: badgeStar 1.8s ease-in-out infinite;
+}
+@keyframes goldShine { to { background-position: 200% center; } }
+@keyframes badgeGlow {
+  0%, 100% { box-shadow: 0 1px 4px rgba(212, 160, 23, 0.5); }
+  50% { box-shadow: 0 2px 12px rgba(255, 193, 7, 0.95), 0 0 4px rgba(255, 220, 120, 0.85); }
+}
+@keyframes badgeStar {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.35) rotate(18deg); opacity: 1; }
+}
+
+/* 身分徽章：官方(金) / 優質成員(綠) / 警示帳戶(紅) */
+.role-badge {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 4px;
+  padding: 2px 9px;
   border-radius: 999px;
   font-size: 10.5px;
   font-weight: 900;
   letter-spacing: 0.03em;
+}
+.role-official {
   color: #6b4b00;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
   background: linear-gradient(100deg, #ffe79a 0%, #ffc107 25%, #fff4c2 50%, #ffc107 75%, #ffe79a 100%);
   background-size: 200% auto;
   box-shadow: 0 1px 4px rgba(212, 160, 23, 0.6);
-  animation: goldShine 2.6s linear infinite;
+  animation: goldShine 2.6s linear infinite, badgeGlow 2.4s ease-in-out infinite;
 }
-@keyframes goldShine { to { background-position: 200% center; } }
+.role-quality {
+  color: #fff;
+  background: linear-gradient(135deg, #34c759 0%, #1f9d48 100%);
+  box-shadow: 0 1px 5px rgba(40, 167, 69, 0.5);
+}
+.role-warning {
+  color: #fff;
+  background: linear-gradient(135deg, #ff6b5b 0%, #d6452f 100%);
+  box-shadow: 0 1px 5px rgba(214, 69, 47, 0.5);
+}
+
+/* 設定面板裡的表單卡片（改密碼 / 指派身分） */
+.settings-form-card { display: flex; flex-direction: column; gap: 8px; padding: 14px; }
+.settings-form-title { font-size: 13.5px; font-weight: 800; color: var(--ink); margin: 0 0 2px; }
+.profile-hint-line { font-size: 12.5px; color: var(--muted); text-align: center; margin: 6px 0 2px; }
+.peer-bio { font-size: 12.5px; color: var(--ink); opacity: 0.8; margin-top: 3px; line-height: 1.45; }
+
+/* 置頂貼文 */
+.post-head-actions { display: flex; align-items: flex-start; gap: 2px; }
+.post-pin-btn {
+  border: 0; background: transparent; cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 4px 6px; border-radius: 8px;
+  opacity: 0.45; filter: grayscale(1);
+  transition: opacity 150ms ease, background 150ms ease, filter 150ms ease;
+}
+.post-pin-btn:hover { opacity: 1; background: rgba(239, 124, 42, 0.12); }
+.post-pin-btn.active { opacity: 1; filter: none; }
+.post-card.is-pinned { border: 1.5px solid var(--beta); box-shadow: 0 8px 22px rgba(239, 124, 42, 0.16); }
+.pin-flag { color: var(--beta-dark); font-weight: 800; }
+
+/* 訊息入口（社群頁） */
+.inbox-entry { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer; }
+.inbox-entry-icon {
+  flex: 0 0 auto; width: 44px; height: 44px; border-radius: 14px;
+  background: var(--beta-soft); display: grid; place-items: center; font-size: 22px;
+}
+.inbox-entry-body { flex: 1; }
+.inbox-entry-body h3 { display: flex; align-items: center; gap: 6px; }
+.inbox-dot {
+  display: inline-block; width: 9px; height: 9px; border-radius: 999px;
+  background: #ff4d4f; box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.18);
+  flex: 0 0 auto;
+}
+
+/* 收件匣清單 */
+.inbox-list { max-height: 60vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.inbox-item {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  padding: 10px; border: 0; background: #fff; border-radius: 14px; cursor: pointer;
+  transition: background 150ms ease, transform 120ms ease;
+}
+.inbox-item:hover { background: var(--beta-soft); }
+.inbox-item:active { transform: scale(0.99); }
+.inbox-item-body { flex: 1; min-width: 0; }
+.inbox-item-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.inbox-item-top strong { font-size: 14px; color: var(--ink); }
+.inbox-time { font-size: 11px; color: var(--muted); flex: 0 0 auto; }
+.inbox-snippet { font-size: 12.5px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.inbox-snippet.unread { color: var(--ink); font-weight: 700; }
+
+/* 互助圈彈窗 */
+.circle-popup { display: flex; flex-direction: column; }
+.circle-tabs { display: flex; gap: 8px; margin: 4px 0 12px; }
+.circle-tab {
+  flex: 1; padding: 9px 0; border-radius: 12px; border: 1.5px solid var(--line);
+  background: #fff; font-size: 13.5px; font-weight: 800; color: var(--muted);
+  cursor: pointer; font-family: inherit; transition: all 150ms ease;
+}
+.circle-tab.active { border-color: var(--beta); background: var(--beta); color: #fff; }
+.circle-msg { display: flex; flex-direction: column; margin-bottom: 8px; }
+.circle-msg.me { align-items: flex-end; }
+.circle-msg.them { align-items: flex-start; }
+.circle-msg-name { font-size: 11px; color: var(--muted); margin: 0 4px 2px; }
+.circle-compose { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 12px; }
+.circle-compose .compose-textarea { flex: 1; }
+.circle-post-btn { width: auto; margin-top: 0; padding: 12px 18px; flex: 0 0 auto; }
+.circle-posts { max-height: 46vh; overflow-y: auto; }
+.circle-create-btn { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; cursor: pointer; border: 1.5px dashed var(--beta); }
 
 /* 貼文作者列（頭像 + 名稱） */
 .post-author { display: flex; align-items: center; gap: 10px; }
@@ -3581,7 +3736,24 @@ button.chip:active {
   border-radius: 999px;
   cursor: pointer;
 }
-.avatar-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+.avatar-picker { display: flex; flex-direction: column; gap: 10px; }
+.avatar-cat-tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.avatar-cat {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line);
+  background: #fff;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: border 150ms ease, background 150ms ease, color 150ms ease, transform 120ms ease;
+}
+.avatar-cat:hover { border-color: var(--beta); color: var(--beta-dark); }
+.avatar-cat:active { transform: scale(0.95); }
+.avatar-cat.active { border-color: var(--beta); background: var(--beta); color: #fff; }
+.avatar-grid { display: flex; flex-wrap: wrap; gap: 8px; }
 .avatar-opt {
   width: 46px;
   height: 46px;
@@ -3593,7 +3765,13 @@ button.chip:active {
   transition: border 150ms ease, transform 120ms ease;
 }
 .avatar-opt:hover { transform: translateY(-2px); }
-.avatar-opt.active { border-color: var(--beta); background: var(--beta-soft); }
+.avatar-opt:active { transform: scale(0.92); }
+.avatar-opt.active { border-color: var(--beta); background: var(--beta-soft); animation: avatarPop 380ms cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes avatarPop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
 .profile-row { display: flex; gap: 8px; align-items: center; }
 .profile-stack { display: flex; flex-direction: column; gap: 8px; }
 .profile-input {
@@ -3607,6 +3785,17 @@ button.chip:active {
   font-family: inherit;
 }
 .profile-input:focus { outline: none; border-color: var(--beta); box-shadow: 0 0 0 3px rgba(239, 124, 42, 0.18); }
+.profile-row-bio { align-items: flex-start; }
+.profile-bio-input { resize: vertical; min-height: 62px; line-height: 1.5; }
+.profile-bio-text {
+  margin: 6px auto 2px;
+  max-width: 88%;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: center;
+  white-space: pre-wrap;
+}
 .profile-mini-btn { width: auto; margin-top: 0; padding: 12px 18px; }
 .profile-posts { margin-bottom: 10px; }
 .profile-logout { width: 100%; margin-top: 8px; padding: 12px; }
