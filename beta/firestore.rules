@@ -1,0 +1,79 @@
+// =========================================================================
+// Firestore 安全規則 — Beta CGM App（最終版）
+// 貼到 Firebase 後台：Firestore Database → 規則 → 全選刪除 → 貼上 → 發布
+// =========================================================================
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+
+    // Boss 用 email 判斷（你不用記 uid，登入 k@beta.com 就是 boss）
+    function isBoss() {
+      return isSignedIn() && request.auth.token.email == 'k@beta.com';
+    }
+
+    // 官方人員（版主）：讀自己的 user 文件看 official 是否為 true
+    function isOfficial() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.official == true;
+    }
+
+    // 使用者個人資料（含 betaId、avatar、official、role、friends）
+    match /users/{uid} {
+      allow read: if true;
+      allow write: if isSignedIn() && (request.auth.uid == uid || isBoss());
+    }
+
+    // 社群貼文
+    match /posts/{postId} {
+      allow read: if true;
+
+      allow create: if isSignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.content is string
+        && request.resource.data.content.size() > 0
+        && request.resource.data.content.size() <= 500;
+
+      // 作者改自己的；任何登入者只能改 replyCount；官方版主可改
+      allow update: if isSignedIn() && (
+        resource.data.uid == request.auth.uid
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount'])
+        || isOfficial()
+      );
+
+      // 作者或官方版主可刪
+      allow delete: if isSignedIn() && (resource.data.uid == request.auth.uid || isOfficial());
+
+      // 貼文回覆
+      match /replies/{replyId} {
+        allow read: if true;
+        allow create: if isSignedIn()
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 300;
+        allow delete: if isSignedIn() && (resource.data.uid == request.auth.uid || isOfficial());
+      }
+    }
+
+    // 私訊：參與者制（雙向）。conversations 文件存 participants 陣列。
+    match /conversations/{convId} {
+      allow read:   if isSignedIn() && request.auth.uid in resource.data.participants;
+      allow create: if isSignedIn() && request.auth.uid in request.resource.data.participants;
+      allow update: if isSignedIn() && request.auth.uid in resource.data.participants;
+
+      match /messages/{msgId} {
+        allow read: if isSignedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants;
+        allow create: if isSignedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/conversations/$(convId)).data.participants
+          && request.resource.data.text is string
+          && request.resource.data.text.size() > 0
+          && request.resource.data.text.size() <= 1000;
+      }
+    }
+  }
+}

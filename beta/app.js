@@ -154,6 +154,7 @@ function ratingTier(rating) {
 const peers = [
   {
     name: "慧敏",
+    uid: "resident_huimin",
     tag: "T2D 5 年",
     avatar: "./assets/peer-huimin.png",
     body: "週末會去打高爾夫，家裡養了兩隻荷蘭兔，喜歡記錄餐後散步前後的血糖差異。",
@@ -161,9 +162,15 @@ const peers = [
       "和你一樣在觀察早餐後 90 分鐘血糖",
       "球場用餐時段曾出現相似的下午高峰",
     ],
+    replies: [
+      "哈囉～很高興認識你！😊",
+      "我也常遇到餐後血糖偏高，後來改成『先吃菜再吃飯、飯後散步 10 分鐘』，下午高峰有明顯改善喔！",
+      "一起加油～有觀察到什麼有趣的血糖曲線都可以敲我分享！",
+    ],
   },
   {
     name: "衣珊",
+    uid: "resident_yishan",
     tag: "T1D 12 年",
     avatar: "./assets/peer-yishan.png",
     body: "全職股票投資人，盯盤時容易忘記吃飯，最近在試「開盤前先補蛋白質」的方案。",
@@ -171,8 +178,78 @@ const peers = [
       "和你一樣留意壓力與血糖的連動",
       "上午 10 點時段血糖波動模式接近",
     ],
+    replies: [
+      "嗨嗨！歡迎加入貝友 🙌",
+      "我盯盤忙起來也常忘記吃，最近開盤前先補一份蛋白質，血糖穩定不少！",
+      "壓力真的會牽動血糖，記得適時起來動一動，我們互相督促吧 💪",
+    ],
   },
 ];
+
+// ====== 社群使用者 / 好友 / 官方 ======
+const BOSS_EMAIL = "k@beta.com";
+const PRESET_AVATARS = ["🦉", "🐱", "🐰", "🐶", "🦊", "🐻", "🐼", "🐨", "🦁", "🐯", "🐸", "🐵", "🐳", "🦄", "🌻", "⭐"];
+
+let myFriends = [];        // 我加的好友 uid 陣列
+let officialUsers = [];     // 官方帳號（從 Firestore 載入）
+let myProfile = null;       // 我的 user 文件資料
+const userCache = {};       // uid -> 使用者資料（給好友/聊天顯示）
+
+function officialBadge(isOfficial) {
+  return isOfficial ? '<span class="gold-badge" title="官方認證">★官方</span>' : "";
+}
+function avatarCircle(emoji) {
+  return '<span class="avatar-emoji">' + esc(emoji || "🦉") + "</span>";
+}
+
+// 推薦貝友：從 Firestore 載入的官方帳號（排除自己）
+function renderRecommendedPeers() {
+  const list = officialUsers.filter((u) => u.uid !== betaCurrentUid);
+  if (!list.length) {
+    return '<article class="card peer-card"><p style="color:var(--muted)">載入官方帳號中…</p></article>';
+  }
+  return list
+    .map((u) => {
+      const isFriend = myFriends.indexOf(u.uid) !== -1;
+      const btn = isFriend
+        ? `<button class="plus-btn is-friend" type="button" data-action="open-chat" data-uid="${esc(u.uid)}" aria-label="私訊 ${esc(u.displayName)}">💬</button>`
+        : `<button class="plus-btn" type="button" data-action="add-friend" data-uid="${esc(u.uid)}" aria-label="加 ${esc(u.displayName)} 為好友">＋</button>`;
+      return `
+        <article class="card peer-card">
+          ${avatarCircle(u.avatar)}
+          <div>
+            <h3>${esc(u.displayName || "貝友")} ${officialBadge(u.official)}</h3>
+            <p>${esc(u.bio || "")}</p>
+            <p class="peer-match">✦ ID ${esc(u.betaId || "----")}</p>
+          </div>
+          ${btn}
+        </article>
+      `;
+    })
+    .join("");
+}
+
+// 我的好友（已加的，含一般好友）
+function renderMyFriends() {
+  if (!myFriends.length) {
+    return '<article class="card peer-card"><p style="color:var(--muted)">還沒有好友，用上面輸入對方 ID 來加好友吧！</p></article>';
+  }
+  return myFriends
+    .map((uid) => {
+      const u = userCache[uid] || { uid: uid, displayName: "貝友", avatar: "🦉" };
+      return `
+        <article class="card peer-card">
+          ${avatarCircle(u.avatar)}
+          <div>
+            <h3>${esc(u.displayName || "貝友")} ${officialBadge(u.official)}</h3>
+            <p class="peer-match">✦ ID ${esc(u.betaId || "----")}</p>
+          </div>
+          <button class="plus-btn is-friend" type="button" data-action="open-chat" data-uid="${esc(uid)}" aria-label="私訊">💬</button>
+        </article>
+      `;
+    })
+    .join("");
+}
 
 const circles = [
   {
@@ -212,6 +289,82 @@ const posts = [
     reactions: "18 則回覆",
   },
 ];
+
+// === 社群即時資料（Firebase）。連線前先用上面的示範貼文，連上後改用真實資料 ===
+let livePosts = posts.slice();
+let postsAreLive = false;
+let showAllPosts = false;
+let betaCurrentUid = null;
+const POSTS_PREVIEW = 3;
+
+// 輕量 toast 提示（登入成功等）
+function showToast(msg) {
+  let t = document.querySelector(".beta-toast");
+  if (!t) {
+    t = document.createElement("div");
+    t.className = "beta-toast";
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add("visible");
+  clearTimeout(t._betaTimer);
+  t._betaTimer = setTimeout(() => t.classList.remove("visible"), 2600);
+}
+
+function reactionText(r) {
+  if (typeof r === "number") return r + " 人覺得有幫助";
+  return r || "0 人覺得有幫助";
+}
+
+function timeAgo(ts) {
+  if (!ts || typeof ts.toDate !== "function") return "剛剛";
+  const diff = Date.now() - ts.toDate().getTime();
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "剛剛";
+  if (min < 60) return min + " 分鐘前";
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return hr + " 小時前";
+  return Math.floor(hr / 24) + " 天前";
+}
+
+function renderCommunityPosts() {
+  if (postsAreLive && livePosts.length === 0) {
+    return `
+      <article class="card post-card">
+        <p style="color: var(--muted)">還沒有人分享，成為第一個發文的貝友吧！</p>
+      </article>`;
+  }
+  const list = showAllPosts ? livePosts : livePosts.slice(0, POSTS_PREVIEW);
+  let html = list
+    .map((post) => {
+      const canDelete = betaCurrentUid && post.uid === betaCurrentUid;
+      const time = post.createdAt ? "　·　" + esc(timeAgo(post.createdAt)) : "";
+      return `
+        <article class="card post-card">
+          <div class="post-card-head">
+            <div class="post-author">
+              ${avatarCircle(post.authorAvatar)}
+              <div>
+                <h3>${esc(post.author || "貝友")} ${officialBadge(post.authorOfficial)}</h3>
+                <span class="unit">${esc(post.badge || "經驗分享")}${time}</span>
+              </div>
+            </div>
+            ${canDelete ? `<button class="post-del-btn" type="button" data-action="delete-post" data-id="${esc(post.id)}" aria-label="刪除貼文" title="刪除">🗑</button>` : ""}
+          </div>
+          <p style="color: var(--ink)">${esc(post.content)}</p>
+          <div class="row-between">
+            <span class="unit">👍 ${esc(reactionText(post.reactions))}</span>
+            <button class="mini-tag mini-tag-btn" type="button" data-action="open-replies" data-id="${esc(post.id)}">💬 回覆${post.replyCount ? " " + post.replyCount : ""}</button>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+  if (!showAllPosts && livePosts.length > POSTS_PREVIEW) {
+    html += `<button class="community-more" type="button" data-action="show-all-posts">看更多分享（還有 ${livePosts.length - POSTS_PREVIEW} 則）</button>`;
+  }
+  return html;
+}
 
 const meals = [
   {
@@ -710,7 +863,7 @@ const pages = {
 
       ${chipRow(["附近貝友", "餐後分享", "運動夥伴", "新手友善", "夜間互助"])}
 
-      <button class="card insight-card community-prompt" type="button" data-action="dev">
+      <button class="card insight-card community-prompt" type="button" data-action="compose-post">
         <span class="icon-tile orange pencil-tile" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 20h9"/>
@@ -723,26 +876,23 @@ const pages = {
         </span>
       </button>
 
+      <h2 class="section-title">今日分享</h2>
+      ${renderCommunityPosts()}
+
+      ${betaCurrentUid ? `
+      <h2 class="section-title">加好友</h2>
+      <div class="card addfriend-card">
+        <input type="text" class="addfriend-input" data-addfriend-input maxlength="12" placeholder="輸入對方的 ID（例如 002）" autocomplete="off" />
+        <button class="addfriend-btn" type="button" data-action="add-by-id">加好友</button>
+      </div>
+      <p class="addfriend-hint" data-addfriend-hint></p>
+
+      <h2 class="section-title">我的好友</h2>
+      ${renderMyFriends()}
+      ` : ""}
+
       <h2 class="section-title">推薦貝友</h2>
-      ${peers
-        .map(
-          (peer) => `
-            <article class="card peer-card">
-              <img class="peer-avatar" src="${esc(peer.avatar)}" alt="${esc(peer.name)} 的頭像" />
-              <div>
-                <h3>${esc(peer.name)}</h3>
-                <p>${esc(peer.body)}</p>
-                ${peer.matches
-                  .map(
-                    (m) => `<p class="peer-match">✦ ${esc(m)}</p>`,
-                  )
-                  .join("")}
-              </div>
-              <button class="plus-btn" type="button" data-action="dev" aria-label="加為好友">+</button>
-            </article>
-          `,
-        )
-        .join("")}
+      ${renderRecommendedPeers()}
 
       <h2 class="section-title">互助圈</h2>
       ${circles
@@ -758,25 +908,6 @@ const pages = {
                 <p>${esc(c.body)}</p>
               </span>
             </button>
-          `,
-        )
-        .join("")}
-
-      <h2 class="section-title">今日分享</h2>
-      ${posts
-        .map(
-          (post) => `
-            <article class="card post-card">
-              <div>
-                <h3>${esc(post.author)}</h3>
-                <span class="unit">${esc(post.badge)}</span>
-              </div>
-              <p style="color: var(--ink)">${esc(post.content)}</p>
-              <div class="row-between">
-                <span class="unit">👍 ${esc(post.reactions)}</span>
-                <button class="mini-tag mini-tag-btn" type="button" data-action="dev">回覆</button>
-              </div>
-            </article>
           `,
         )
         .join("")}
@@ -1021,6 +1152,10 @@ const restaurantPopupRoot = document.querySelector(".restaurant-popup-root");
 const restaurantPopupBody = restaurantPopupRoot?.querySelector(".restaurant-popup-body");
 const settingsRoot = document.querySelector(".settings-root");
 const loginRoot = document.querySelector(".login-root");
+const composePopupRoot = document.querySelector(".compose-popup-root");
+const repliesPopupRoot = document.querySelector(".replies-popup-root");
+const chatPopupRoot = document.querySelector(".chat-popup-root");
+const profilePopupRoot = document.querySelector(".profile-popup-root");
 const onboardingRoot = document.querySelector(".onboarding-root");
 
 function showRestaurant(r) {
@@ -1083,7 +1218,7 @@ function closePopup(root) {
   }, 200);
 }
 
-const allPopups = [devPopupRoot, medicalPopupRoot, restaurantPopupRoot, paywallPopupRoot, cgmPopupRoot, settingsRoot, loginRoot];
+const allPopups = [devPopupRoot, medicalPopupRoot, restaurantPopupRoot, paywallPopupRoot, cgmPopupRoot, settingsRoot, loginRoot, composePopupRoot, repliesPopupRoot, chatPopupRoot, profilePopupRoot];
 
 allPopups.forEach((root) => {
   if (!root) return;
@@ -1232,6 +1367,615 @@ document.addEventListener("click", (event) => {
   try { seen = localStorage.getItem(ONBOARDING_KEY) || "0"; } catch (e) {}
   if (seen !== "1") {
     requestAnimationFrame(openOnboarding);
+  }
+})();
+
+// ====== Firebase：帳號登入 + 社群貼文 ======
+(function betaBackend() {
+  const ready = window.__BETA_FIREBASE_READY__ === true && typeof firebase !== "undefined";
+  const auth = ready ? firebase.auth() : null;
+  const db = ready ? firebase.firestore() : null;
+
+  let currentUser = null;
+  let authMode = "login"; // "login" | "register"
+
+  // --- 元素 ---
+  const form = loginRoot ? loginRoot.querySelector(".login-form") : null;
+  const emailInput = form ? form.querySelector("input[type='email']") : null;
+  const passwordInput = form ? form.querySelector("input[type='password']") : null;
+  const nicknameField = loginRoot ? loginRoot.querySelector("[data-login-nickname]") : null;
+  const nicknameInput = nicknameField ? nicknameField.querySelector("input") : null;
+  const errorBox = loginRoot ? loginRoot.querySelector("[data-login-error]") : null;
+  const primaryBtn = loginRoot ? loginRoot.querySelector("[data-action='auth-submit']") : null;
+  const titleEl = loginRoot ? loginRoot.querySelector("#login-title") : null;
+  const toggleLabel = loginRoot ? loginRoot.querySelector("[data-login-toggle-label]") : null;
+  const toggleBtn = loginRoot ? loginRoot.querySelector("[data-login-toggle-btn]") : null;
+  const accountSection = document.querySelector("#settings-account");
+
+  const composeText = composePopupRoot ? composePopupRoot.querySelector("[data-compose-text]") : null;
+  const composeBadge = composePopupRoot ? composePopupRoot.querySelector("[data-compose-badge]") : null;
+  const composeError = composePopupRoot ? composePopupRoot.querySelector("[data-compose-error]") : null;
+  const composeSubmit = composePopupRoot ? composePopupRoot.querySelector("[data-action='compose-submit']") : null;
+
+  const repliesOriginal = repliesPopupRoot ? repliesPopupRoot.querySelector("[data-replies-original]") : null;
+  const repliesList = repliesPopupRoot ? repliesPopupRoot.querySelector("[data-replies-list]") : null;
+  const replyText = repliesPopupRoot ? repliesPopupRoot.querySelector("[data-reply-text]") : null;
+  const replyError = repliesPopupRoot ? repliesPopupRoot.querySelector("[data-reply-error]") : null;
+
+  const chatMessages = chatPopupRoot ? chatPopupRoot.querySelector("[data-chat-messages]") : null;
+  const chatText = chatPopupRoot ? chatPopupRoot.querySelector("[data-chat-text]") : null;
+  const chatAvatar = chatPopupRoot ? chatPopupRoot.querySelector("[data-chat-avatar]") : null;
+  const chatName = chatPopupRoot ? chatPopupRoot.querySelector("[data-chat-name]") : null;
+
+  let friendsUnsub = null;
+  let activePostId = null;
+  let repliesUnsub = null;
+  let activeChat = null;
+  let chatUnsub = null;
+  let chatResidentMsgCount = 0;
+
+  // --- 小工具 ---
+  function setError(msg) {
+    if (!errorBox) return;
+    errorBox.textContent = msg || "";
+    errorBox.style.display = msg ? "block" : "none";
+  }
+  function setComposeError(msg) {
+    if (!composeError) return;
+    composeError.textContent = msg || "";
+    composeError.style.display = msg ? "block" : "none";
+  }
+  function friendlyError(code) {
+    const map = {
+      "auth/invalid-email": "Email 格式不正確。",
+      "auth/missing-password": "請輸入密碼。",
+      "auth/weak-password": "密碼至少要 6 個字元。",
+      "auth/email-already-in-use": "這個 Email 已經註冊過了，直接登入吧。",
+      "auth/invalid-credential": "Email 或密碼不對。",
+      "auth/wrong-password": "密碼不對。",
+      "auth/user-not-found": "找不到這個帳號，先註冊吧。",
+      "auth/too-many-requests": "嘗試太多次，請稍後再試。",
+      "auth/network-request-failed": "網路連線有問題，請檢查網路。",
+    };
+    return map[code] || null;
+  }
+  function setBusy(busy) {
+    if (!primaryBtn) return;
+    primaryBtn.disabled = busy;
+    primaryBtn.textContent = busy ? "請稍候…" : (authMode === "register" ? "註冊" : "登入");
+  }
+
+  function updateModeUI() {
+    if (titleEl) titleEl.textContent = authMode === "register" ? "建立帳號" : "歡迎回來";
+    if (primaryBtn) primaryBtn.textContent = authMode === "register" ? "註冊" : "登入";
+    if (nicknameField) nicknameField.style.display = authMode === "register" ? "" : "none";
+    if (toggleLabel) toggleLabel.textContent = authMode === "register" ? "已經有帳號了？" : "還沒有帳號？";
+    if (toggleBtn) toggleBtn.textContent = authMode === "register" ? "改用登入" : "免費註冊";
+    setError("");
+  }
+
+  function renderAccount() {
+    if (!accountSection) return;
+    if (currentUser) {
+      const name = (myProfile && myProfile.displayName) || currentUser.displayName || "貝友";
+      const badge = (myProfile && myProfile.official) ? " " + officialBadge(true) : "";
+      accountSection.setAttribute("data-action", "open-profile");
+      accountSection.innerHTML =
+        '<div class="settings-avatar">' + esc(myAvatar()) + "</div>" +
+        '<div class="settings-account-body">' +
+          "<strong>" + esc(name) + badge + "</strong>" +
+          "<small>ID " + esc(myBetaId()) + "　·　點此編輯個人檔案</small>" +
+        "</div>" +
+        '<span class="settings-arrow">›</span>';
+    } else {
+      accountSection.setAttribute("data-action", "open-login");
+      accountSection.innerHTML =
+        '<div class="settings-avatar">👤</div>' +
+        '<div class="settings-account-body">' +
+          "<strong>登入 Beta 帳號</strong>" +
+          "<small>同步雲端資料、跨裝置使用</small>" +
+        "</div>" +
+        '<span class="settings-arrow">›</span>';
+    }
+  }
+
+  // --- 動作 ---
+  async function handleSubmit() {
+    if (!auth) { setError("尚未設定 Firebase，無法登入（請見 firebase-init.js）。"); return; }
+    const email = ((emailInput && emailInput.value) || "").trim();
+    const password = (passwordInput && passwordInput.value) || "";
+    if (!email || !password) { setError("請輸入 Email 和密碼。"); return; }
+    setBusy(true);
+    try {
+      if (authMode === "register") {
+        const nickname = ((nicknameInput && nicknameInput.value) || "").trim();
+        if (!nickname) { setError("請幫自己取一個暱稱。"); setBusy(false); return; }
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        await cred.user.updateProfile({ displayName: nickname });
+        await ensureProfile(cred.user, nickname);
+        currentUser = auth.currentUser;
+        renderAccount();
+      } else {
+        await auth.signInWithEmailAndPassword(email, password);
+      }
+      const who = (auth.currentUser && auth.currentUser.displayName) ? "，" + auth.currentUser.displayName : "";
+      showToast(authMode === "register" ? "註冊成功，歡迎加入貝友 🎉" : "歡迎回來" + who + " 👋");
+      setError("");
+      if (emailInput) emailInput.value = "";
+      if (passwordInput) passwordInput.value = "";
+      if (nicknameInput) nicknameInput.value = "";
+    } catch (e) {
+      setError(friendlyError(e.code) || e.message || "登入失敗，請稍後再試。");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleReset() {
+    if (!auth) { setError("尚未設定 Firebase。"); return; }
+    const email = ((emailInput && emailInput.value) || "").trim();
+    if (!email) { setError("請先在上面輸入要重設密碼的 Email。"); return; }
+    try {
+      await auth.sendPasswordResetEmail(email);
+      setError("重設密碼信已寄出，請收信。");
+    } catch (e) {
+      setError(friendlyError(e.code) || "寄送失敗，請確認 Email 是否正確。");
+    }
+  }
+
+  async function handleCompose() {
+    if (!db || !currentUser) { closePopup(composePopupRoot); return; }
+    const content = ((composeText && composeText.value) || "").trim();
+    const badge = (composeBadge && composeBadge.value) || "經驗分享";
+    if (!content) { setComposeError("請寫點東西再發布。"); return; }
+    if (content.length > 500) { setComposeError("字數請控制在 500 字以內。"); return; }
+    if (composeSubmit) composeSubmit.disabled = true;
+    try {
+      await db.collection("posts").add({
+        uid: currentUser.uid,
+        author: currentUser.displayName || "貝友",
+        authorAvatar: myAvatar(),
+        authorOfficial: !!(myProfile && myProfile.official),
+        badge: badge,
+        content: content,
+        reactions: 0,
+        replyCount: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      if (composeText) composeText.value = "";
+      setComposeError("");
+      closePopup(composePopupRoot);
+    } catch (e) {
+      setComposeError(friendlyError(e.code) || "發布失敗，請稍後再試。");
+    } finally {
+      if (composeSubmit) composeSubmit.disabled = false;
+    }
+  }
+
+  function genId() { return String(Math.floor(1000 + Math.random() * 9000)); }
+  function myBetaId() { return (myProfile && myProfile.betaId) || "----"; }
+  function myAvatar() { return (myProfile && myProfile.avatar) || "🦉"; }
+  function isBoss() { return !!(currentUser && currentUser.email === BOSS_EMAIL); }
+
+  async function ensureProfile(user, nickname) {
+    if (!db || !user) return;
+    const ref = db.collection("users").doc(user.uid);
+    try {
+      const snap = await ref.get();
+      const data = snap.exists ? snap.data() : {};
+      const patch = {};
+      if (!data.betaId) patch.betaId = genId();
+      if (!data.avatar) patch.avatar = "🦉";
+      if (nickname && !data.displayName) patch.displayName = nickname;
+      if (!snap.exists) patch.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      if (Object.keys(patch).length) await ref.set(patch, { merge: true });
+    } catch (e) { /* 忽略 */ }
+  }
+
+  function subscribeMyProfile(uid) {
+    if (friendsUnsub) { friendsUnsub(); friendsUnsub = null; }
+    if (!db || !uid) { myProfile = null; myFriends = []; return; }
+    friendsUnsub = db.collection("users").doc(uid).onSnapshot((doc) => {
+      myProfile = doc.exists ? doc.data() : null;
+      myFriends = (myProfile && Array.isArray(myProfile.friends)) ? myProfile.friends : [];
+      if (myProfile) userCache[uid] = Object.assign({ uid: uid }, myProfile);
+      myFriends.forEach((fid) => {
+        if (!userCache[fid]) {
+          db.collection("users").doc(fid).get().then((d) => {
+            if (d.exists) {
+              userCache[fid] = Object.assign({ uid: fid }, d.data());
+              if (currentPage === "community") render("community");
+            }
+          }).catch(() => {});
+        }
+      });
+      renderAccount();
+      if (currentPage === "community") render("community");
+      if (profilePopupRoot && !profilePopupRoot.hidden) renderProfile();
+    }, function () {});
+  }
+
+  function subscribeOfficial() {
+    if (!db) return;
+    db.collection("users").where("official", "==", true).onSnapshot((snap) => {
+      officialUsers = snap.docs.map((d) => Object.assign({ uid: d.id }, d.data()));
+      officialUsers.forEach((u) => { userCache[u.uid] = u; });
+      if (currentPage === "community") render("community");
+    }, function () {});
+  }
+
+  // ---- 個人介面 ----
+  function renderProfile() {
+    if (!profilePopupRoot || !currentUser) return;
+    const name = (myProfile && myProfile.displayName) || currentUser.displayName || "貝友";
+    const av = myAvatar();
+    const q = (sel) => profilePopupRoot.querySelector(sel);
+    const pAvatar = q("[data-profile-avatar]");
+    const pName = q("[data-profile-name]");
+    const pId = q("[data-profile-id]");
+    const pBadge = q("[data-profile-badge]");
+    const pNameInput = q("[data-profile-name-input]");
+    const picker = q("[data-avatar-picker]");
+    const bossPanel = q("[data-boss-panel]");
+    const postsBox = q("[data-profile-posts]");
+    if (pAvatar) pAvatar.textContent = av;
+    if (pName) pName.textContent = name;
+    if (pId) pId.textContent = myBetaId();
+    if (pBadge) pBadge.innerHTML = (myProfile && myProfile.official) ? officialBadge(true) : "";
+    if (pNameInput && document.activeElement !== pNameInput) pNameInput.value = name;
+    if (picker) {
+      picker.innerHTML = PRESET_AVATARS.map((e) =>
+        `<button class="avatar-opt${e === av ? " active" : ""}" type="button" data-action="pick-avatar" data-emoji="${esc(e)}">${esc(e)}</button>`
+      ).join("");
+    }
+    if (bossPanel) bossPanel.style.display = isBoss() ? "" : "none";
+    if (postsBox) {
+      const mine = livePosts.filter((p) => p.uid === currentUser.uid);
+      postsBox.innerHTML = mine.length
+        ? mine.map((p) => `
+            <article class="card post-card" style="margin-bottom:8px">
+              <div class="post-card-head">
+                <span class="unit">${esc(p.badge || "")}${p.createdAt ? "　·　" + esc(timeAgo(p.createdAt)) : ""}</span>
+                <button class="post-del-btn" type="button" data-action="delete-post" data-id="${esc(p.id)}" title="刪除">🗑</button>
+              </div>
+              <p style="color:var(--ink)">${esc(p.content)}</p>
+            </article>`).join("")
+        : '<p class="chat-empty">你還沒發過貼文。</p>';
+    }
+  }
+
+  function openProfile() {
+    if (!currentUser) { openPopup(loginRoot); return; }
+    closePopup(settingsRoot);
+    renderProfile();
+    const msg = profilePopupRoot && profilePopupRoot.querySelector("[data-pw-msg]");
+    if (msg) { msg.style.display = "none"; msg.textContent = ""; }
+    openPopup(profilePopupRoot);
+  }
+
+  async function saveName() {
+    const inp = profilePopupRoot && profilePopupRoot.querySelector("[data-profile-name-input]");
+    const name = ((inp && inp.value) || "").trim();
+    if (!name || !currentUser) { showToast("暱稱不能空白"); return; }
+    try {
+      await currentUser.updateProfile({ displayName: name });
+      await db.collection("users").doc(currentUser.uid).set({ displayName: name }, { merge: true });
+      showToast("暱稱已更新 ✓");
+    } catch (e) { showToast("更新失敗"); }
+  }
+
+  function pickAvatar(emoji) {
+    if (!emoji || !db || !currentUser) return;
+    db.collection("users").doc(currentUser.uid).set({ avatar: emoji }, { merge: true })
+      .then(() => showToast("頭貼已更新 ✓")).catch(() => {});
+  }
+
+  function copyId() {
+    const id = myBetaId();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(id).then(() => showToast("已複製 ID " + id)).catch(() => showToast("ID：" + id));
+    } else { showToast("ID：" + id); }
+  }
+
+  async function changePassword() {
+    const cur = profilePopupRoot.querySelector("[data-pw-current]");
+    const nw = profilePopupRoot.querySelector("[data-pw-new]");
+    const msg = profilePopupRoot.querySelector("[data-pw-msg]");
+    function show(m, ok) { if (msg) { msg.textContent = m; msg.style.display = "block"; msg.style.color = ok ? "var(--green)" : "#c0392b"; } }
+    if (!auth || !currentUser) return;
+    const c = (cur && cur.value) || "";
+    const n = (nw && nw.value) || "";
+    if (!c || !n) { show("請輸入目前密碼與新密碼。"); return; }
+    if (n.length < 6) { show("新密碼至少 6 碼。"); return; }
+    try {
+      const cred = firebase.auth.EmailAuthProvider.credential(currentUser.email, c);
+      await currentUser.reauthenticateWithCredential(cred);
+      await currentUser.updatePassword(n);
+      if (cur) cur.value = "";
+      if (nw) nw.value = "";
+      show("密碼已更新 ✓", true);
+      showToast("密碼已更新 ✓");
+    } catch (e) {
+      show(friendlyError(e.code) || "更新失敗，請確認目前密碼是否正確。");
+    }
+  }
+
+  async function bossAssign() {
+    if (!isBoss() || !db) return;
+    const tEl = profilePopupRoot.querySelector("[data-boss-target]");
+    const nEl = profilePopupRoot.querySelector("[data-boss-newid]");
+    const msg = profilePopupRoot.querySelector("[data-boss-msg]");
+    function show(m, ok) { if (msg) { msg.textContent = m; msg.style.display = "block"; msg.style.color = ok ? "var(--green)" : "#c0392b"; } }
+    const target = ((tEl && tEl.value) || "").trim();
+    const newId = ((nEl && nEl.value) || "").trim();
+    if (!target || !newId) { show("請輸入對方目前 ID 與新官方 ID。"); return; }
+    try {
+      const snap = await db.collection("users").where("betaId", "==", target).limit(1).get();
+      if (snap.empty) { show("找不到這個 ID。"); return; }
+      await db.collection("users").doc(snap.docs[0].id).set({ betaId: newId, official: true }, { merge: true });
+      if (tEl) tEl.value = "";
+      if (nEl) nEl.value = "";
+      show("已設為官方 ✓（ID " + newId + "）", true);
+      showToast("已指派官方帳號 ✓");
+    } catch (e) { show("設定失敗（需 boss 權限）。"); }
+  }
+
+  async function addFriendById() {
+    const input = document.querySelector("[data-addfriend-input]");
+    const hint = document.querySelector("[data-addfriend-hint]");
+    const id = ((input && input.value) || "").trim();
+    if (!currentUser) { openPopup(loginRoot); return; }
+    if (!id) { if (hint) hint.textContent = "請輸入對方的 ID。"; return; }
+    if (myProfile && id === myProfile.betaId) { if (hint) hint.textContent = "這是你自己的 ID 啦 😅"; return; }
+    if (hint) hint.textContent = "搜尋中…";
+    try {
+      const snap = await db.collection("users").where("betaId", "==", id).limit(1).get();
+      if (snap.empty) { if (hint) hint.textContent = "找不到這個 ID 的使用者。"; return; }
+      const u = Object.assign({ uid: snap.docs[0].id }, snap.docs[0].data());
+      userCache[u.uid] = u;
+      await db.collection("users").doc(currentUser.uid).set(
+        { friends: firebase.firestore.FieldValue.arrayUnion(u.uid) }, { merge: true });
+      if (input) input.value = "";
+      if (hint) hint.textContent = "";
+      showToast("已加 " + (u.displayName || "好友") + " 為好友 🎉");
+    } catch (e) {
+      if (hint) hint.textContent = "加好友失敗，請稍後再試。";
+    }
+  }
+
+  function openReplies(postId) {
+    if (!db) { openPopup(devPopupRoot); return; }
+    activePostId = postId;
+    const post = livePosts.find((p) => p.id === postId);
+    if (repliesOriginal) {
+      repliesOriginal.innerHTML = post ? `
+        <article class="card post-card" style="margin:0">
+          <div><h3>${esc(post.author || "貝友")}</h3><span class="unit">${esc(post.badge || "")}</span></div>
+          <p style="color:var(--ink)">${esc(post.content)}</p>
+        </article>` : "";
+    }
+    if (replyText) replyText.value = "";
+    if (replyError) { replyError.textContent = ""; replyError.style.display = "none"; }
+    if (repliesList) repliesList.innerHTML = '<p class="chat-empty">載入回覆中…</p>';
+    if (repliesUnsub) { repliesUnsub(); repliesUnsub = null; }
+    repliesUnsub = db.collection("posts").doc(postId).collection("replies")
+      .orderBy("createdAt", "asc").onSnapshot((snap) => {
+        if (!repliesList) return;
+        if (snap.empty) { repliesList.innerHTML = '<p class="chat-empty">還沒有回覆，當第一個吧！</p>'; return; }
+        repliesList.innerHTML = snap.docs.map((d) => {
+          const r = d.data();
+          return `<div class="reply-item"><strong>${esc(r.author || "貝友")} ${officialBadge(r.authorOfficial)}</strong><span class="reply-time">${esc(timeAgo(r.createdAt))}</span><p>${esc(r.content)}</p></div>`;
+        }).join("");
+      }, () => { if (repliesList) repliesList.innerHTML = '<p class="chat-empty">回覆載入失敗</p>'; });
+    openPopup(repliesPopupRoot);
+  }
+
+  async function submitReply() {
+    if (!db) return;
+    if (!currentUser) { closePopup(repliesPopupRoot); openPopup(loginRoot); return; }
+    const content = ((replyText && replyText.value) || "").trim();
+    if (!content) { if (replyError) { replyError.textContent = "回覆不能空白。"; replyError.style.display = "block"; } return; }
+    if (!activePostId) return;
+    try {
+      const postRef = db.collection("posts").doc(activePostId);
+      await postRef.collection("replies").add({
+        uid: currentUser.uid,
+        author: currentUser.displayName || "貝友",
+        authorAvatar: myAvatar(),
+        authorOfficial: !!(myProfile && myProfile.official),
+        content: content,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      postRef.update({ replyCount: firebase.firestore.FieldValue.increment(1) }).catch(() => {});
+      if (replyText) replyText.value = "";
+    } catch (e) {
+      if (replyError) { replyError.textContent = friendlyError(e.code) || "回覆失敗，請稍後再試。"; replyError.style.display = "block"; }
+    }
+  }
+
+  function renderChatMessages(docs, other) {
+    if (!chatMessages) return;
+    if (!docs.length) {
+      chatMessages.innerHTML = `<p class="chat-empty">跟 ${esc(other.displayName || "對方")} 打聲招呼吧 👋</p>`;
+      return;
+    }
+    chatMessages.innerHTML = docs.map((d) => {
+      const m = d.data();
+      const mine = currentUser && m.senderUid === currentUser.uid;
+      return `<div class="chat-bubble ${mine ? "me" : "them"}">${esc(m.text)}</div>`;
+    }).join("");
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  async function openChat(uid) {
+    if (!db) { openPopup(devPopupRoot); return; }
+    if (!currentUser) { openPopup(loginRoot); return; }
+    const other = userCache[uid] || { uid: uid, displayName: "貝友", avatar: "🦉" };
+    activeChat = other;
+    if (chatAvatar) chatAvatar.textContent = other.avatar || "🦉";
+    if (chatName) chatName.textContent = other.displayName || "貝友";
+    if (chatText) chatText.value = "";
+    if (chatMessages) chatMessages.innerHTML = '<p class="chat-empty">載入中…</p>';
+    const convId = [currentUser.uid, uid].sort().join("__");
+    try {
+      await db.collection("conversations").doc(convId).set({
+        participants: [currentUser.uid, uid].sort(),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    } catch (e) { /* 忽略 */ }
+    if (chatUnsub) { chatUnsub(); chatUnsub = null; }
+    chatUnsub = db.collection("conversations").doc(convId).collection("messages")
+      .orderBy("createdAt", "asc").onSnapshot((snap) => {
+        renderChatMessages(snap.docs, other);
+      }, () => { if (chatMessages) chatMessages.innerHTML = '<p class="chat-empty">訊息載入失敗</p>'; });
+    openPopup(chatPopupRoot);
+  }
+
+  async function sendChat() {
+    if (!db || !currentUser || !activeChat) return;
+    const text = ((chatText && chatText.value) || "").trim();
+    if (!text) return;
+    const convId = [currentUser.uid, activeChat.uid].sort().join("__");
+    if (chatText) chatText.value = "";
+    try {
+      await db.collection("conversations").doc(convId).collection("messages").add({
+        senderUid: currentUser.uid,
+        senderName: currentUser.displayName || "我",
+        text: text,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      db.collection("conversations").doc(convId).set(
+        { updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(() => {});
+    } catch (e) {
+      showToast("訊息送出失敗");
+    }
+  }
+
+  // --- 事件 ---
+  document.addEventListener("click", (event) => {
+    if (event.target.closest("[data-action='auth-toggle-mode']")) {
+      authMode = authMode === "login" ? "register" : "login";
+      updateModeUI();
+      return;
+    }
+    if (event.target.closest("[data-action='auth-submit']")) { handleSubmit(); return; }
+    if (event.target.closest("[data-action='auth-reset']")) { handleReset(); return; }
+    if (event.target.closest("[data-action='auth-logout']")) {
+      if (auth) auth.signOut();
+      return;
+    }
+    if (event.target.closest("[data-action='compose-post']")) {
+      if (!ready) { openPopup(devPopupRoot); return; }
+      if (!currentUser) { openPopup(loginRoot); return; }
+      setComposeError("");
+      if (composeText) composeText.value = "";
+      openPopup(composePopupRoot);
+      return;
+    }
+    if (event.target.closest("[data-action='compose-submit']")) { handleCompose(); return; }
+    const delBtn = event.target.closest("[data-action='delete-post']");
+    if (delBtn) {
+      const id = delBtn.getAttribute("data-id");
+      if (id && db && currentUser && window.confirm("確定要刪除這篇貼文嗎？刪除後無法復原。")) {
+        db.collection("posts").doc(id).delete()
+          .then(() => showToast("已刪除"))
+          .catch(() => showToast("刪除失敗，請稍後再試"));
+      }
+      return;
+    }
+    if (event.target.closest("[data-action='show-all-posts']")) {
+      showAllPosts = true;
+      if (currentPage === "community") render("community");
+      return;
+    }
+    const addFriendBtn = event.target.closest("[data-action='add-friend']");
+    if (addFriendBtn) {
+      if (!currentUser) { openPopup(loginRoot); return; }
+      const uid = addFriendBtn.getAttribute("data-uid");
+      if (uid && db) {
+        db.collection("users").doc(currentUser.uid).set(
+          { friends: firebase.firestore.FieldValue.arrayUnion(uid) },
+          { merge: true }
+        ).then(() => {
+          const u = userCache[uid];
+          showToast("已加 " + (u ? u.displayName : "好友") + " 為好友 🎉");
+        }).catch(() => showToast("加好友失敗，請稍後再試"));
+      }
+      return;
+    }
+    if (event.target.closest("[data-action='add-by-id']")) { addFriendById(); return; }
+    const chatBtn = event.target.closest("[data-action='open-chat']");
+    if (chatBtn) { openChat(chatBtn.getAttribute("data-uid")); return; }
+    const repBtn = event.target.closest("[data-action='open-replies']");
+    if (repBtn) { openReplies(repBtn.getAttribute("data-id")); return; }
+    if (event.target.closest("[data-action='reply-submit']")) { submitReply(); return; }
+    if (event.target.closest("[data-action='chat-send']")) { sendChat(); return; }
+    if (event.target.closest("[data-action='open-profile']")) { openProfile(); return; }
+    const pickAv = event.target.closest("[data-action='pick-avatar']");
+    if (pickAv) { pickAvatar(pickAv.getAttribute("data-emoji")); return; }
+    if (event.target.closest("[data-action='save-name']")) { saveName(); return; }
+    if (event.target.closest("[data-action='copy-id']")) { copyId(); return; }
+    if (event.target.closest("[data-action='change-pw']")) { changePassword(); return; }
+    if (event.target.closest("[data-action='boss-assign']")) { bossAssign(); return; }
+  });
+
+  // 在登入表單按 Enter 直接送出
+  if (form) {
+    form.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") { event.preventDefault(); handleSubmit(); }
+    });
+  }
+  // 聊天輸入框按 Enter 送出
+  if (chatText) {
+    chatText.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") { event.preventDefault(); sendChat(); }
+    });
+  }
+  // 關閉回覆/私訊視窗時停止即時監聽
+  if (repliesPopupRoot) {
+    repliesPopupRoot.addEventListener("click", (e) => {
+      if (e.target.closest("[data-popup-close]") && repliesUnsub) { repliesUnsub(); repliesUnsub = null; }
+    });
+  }
+  if (chatPopupRoot) {
+    chatPopupRoot.addEventListener("click", (e) => {
+      if (e.target.closest("[data-popup-close]") && chatUnsub) { chatUnsub(); chatUnsub = null; }
+    });
+  }
+
+  // --- 啟動 ---
+  updateModeUI();
+  renderAccount();
+
+  if (auth) {
+    auth.onAuthStateChanged(async (user) => {
+      currentUser = user;
+      betaCurrentUid = user ? user.uid : null;
+      if (user) {
+        await ensureProfile(user);
+        subscribeMyProfile(user.uid);
+      } else {
+        myProfile = null;
+        myFriends = [];
+        if (friendsUnsub) { friendsUnsub(); friendsUnsub = null; }
+      }
+      renderAccount();
+      if (currentPage === "community") render("community");
+      if (user) { setError(""); closePopup(loginRoot); }
+    });
+  }
+
+  if (db) {
+    subscribeOfficial();
+    db.collection("posts").orderBy("createdAt", "desc").limit(50).onSnapshot(
+      (snap) => {
+        postsAreLive = true;
+        livePosts = snap.docs.map((d) => Object.assign({ id: d.id }, d.data()));
+        if (currentPage === "community") render("community");
+        if (profilePopupRoot && !profilePopupRoot.hidden) renderProfile();
+      },
+      (err) => { console.warn("[Beta] 社群貼文監聽失敗：", err); }
+    );
   }
 })();
 
