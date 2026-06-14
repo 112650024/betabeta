@@ -3660,6 +3660,22 @@ button.chip:active {
 .inbox-snippet { font-size: 12.5px; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .inbox-snippet.unread { color: var(--ink); font-weight: 700; }
 
+/* LINE 風格未讀數字徽章 */
+.inbox-count {
+  flex: 0 0 auto;
+  min-width: 20px; height: 20px; padding: 0 6px;
+  border-radius: 999px; background: #ff4d4f; color: #fff;
+  font-size: 12px; font-weight: 800; line-height: 20px; text-align: center;
+  box-shadow: 0 1px 4px rgba(255, 77, 79, 0.4);
+}
+.inbox-entry-body h3 { gap: 8px; }
+.inbox-entry-body h3 .inbox-count { display: inline-block; }
+
+/* 對方個人檔案彈窗 */
+.peer-actions { margin-top: 18px; }
+.peer-actions .login-primary { width: 100%; margin-top: 0; }
+.profile-bio-text.is-empty { opacity: 0.55; font-style: italic; }
+
 /* 互助圈彈窗 */
 .circle-popup { display: flex; flex-direction: column; }
 .circle-tabs { display: flex; gap: 8px; margin: 4px 0 12px; }

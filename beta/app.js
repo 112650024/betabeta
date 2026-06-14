@@ -212,8 +212,11 @@ function roleBadgeHTML(official, role) {
   return "";
 }
 function officialBadge(isOfficial) { return roleBadgeHTML(isOfficial, null); }
-function avatarCircle(emoji) {
-  return '<span class="avatar-emoji">' + esc(emoji || "🦉") + "</span>";
+function avatarCircle(emoji, uid) {
+  const attrs = uid
+    ? ' data-action="view-peer" data-uid="' + esc(uid) + '" role="button" tabindex="0" title="看個人檔案" style="cursor:pointer"'
+    : "";
+  return '<span class="avatar-emoji"' + attrs + ">" + esc(emoji || "🦉") + "</span>";
 }
 
 // 推薦貝友：從 Firestore 載入的官方帳號（排除自己）
@@ -235,7 +238,7 @@ function renderRecommendedPeers() {
         : `<button class="plus-btn" type="button" data-action="add-friend" data-uid="${esc(u.uid)}" aria-label="加 ${esc(u.displayName)} 為好友">＋</button>`;
       return `
         <article class="card peer-card">
-          ${avatarCircle(u.avatar)}
+          ${avatarCircle(u.avatar, u.uid)}
           <div>
             <h3>${esc(u.displayName || "貝友")} ${roleBadgeHTML(u.official, u.role)}</h3>
             ${hasRealText(u.bio) ? `<p class="peer-bio">${esc(u.bio)}</p>` : ""}
@@ -258,7 +261,7 @@ function renderMyFriends() {
       const u = userCache[uid] || { uid: uid, displayName: "貝友", avatar: "🦉" };
       return `
         <article class="card peer-card">
-          ${avatarCircle(u.avatar)}
+          ${avatarCircle(u.avatar, uid)}
           <div>
             <h3>${esc(u.displayName || "貝友")} ${roleBadgeHTML(u.official, u.role)}</h3>
             <p class="peer-match">● ID ${esc(u.betaId || "----")}</p>
@@ -341,8 +344,9 @@ let postsAreLive = false;
 let showAllPosts = false;
 let betaCurrentUid = null;
 const POSTS_PREVIEW = 3;
-let liveCircles = [];      // 互助圈（從 Firestore 載入）
-let inboxUnread = false;   // 私訊收件匣是否有未讀（給社群紅點用）
+let liveCircles = [];        // 互助圈（從 Firestore 載入）
+let inboxUnread = false;     // 私訊收件匣是否有未讀
+let inboxUnreadCount = 0;    // 私訊未讀總數（給社群數字徽章用，像 LINE）
 
 // 輕量 toast 提示（登入成功等）
 function showToast(msg) {
@@ -397,7 +401,7 @@ function postCardHTML(post, i, amOfficial) {
     <article class="card post-card${post.pinned ? " is-pinned" : ""}" style="animation: rise .42s cubic-bezier(0.22,1,0.36,1) both; animation-delay: ${i * 45}ms">
       <div class="post-card-head">
         <div class="post-author">
-          ${avatarCircle(post.authorAvatar)}
+          ${avatarCircle(post.authorAvatar, post.uid)}
           <div>
             <h3>${esc(post.author || "貝友")} ${roleBadgeHTML(post.authorOfficial, post.authorRole)}</h3>
             <span class="unit">${pinMark}${esc(post.badge || "經驗分享")}${time}</span>
@@ -935,7 +939,7 @@ const pages = {
 
       ${betaCurrentUid ? `<button class="card inbox-entry" type="button" data-action="open-inbox">
         <span class="inbox-entry-icon">💬</span>
-        <span class="inbox-entry-body"><h3>我的訊息${inboxUnread ? '<span class="inbox-dot"></span>' : ""}</h3><p>查看所有私訊對話</p></span>
+        <span class="inbox-entry-body"><h3>我的訊息${inboxUnreadCount > 0 ? `<span class="inbox-count">${inboxUnreadCount > 99 ? "99+" : inboxUnreadCount}</span>` : ""}</h3><p>查看所有私訊對話</p></span>
         <span class="settings-arrow">›</span>
       </button>` : ""}
 
@@ -1221,6 +1225,7 @@ const confirmPopupRoot = document.querySelector(".confirm-popup-root");
 const inboxPopupRoot = document.querySelector(".inbox-popup-root");
 const circlePopupRoot = document.querySelector(".circle-popup-root");
 const createCirclePopupRoot = document.querySelector(".create-circle-popup-root");
+const peerProfilePopupRoot = document.querySelector(".peer-profile-popup-root");
 const onboardingRoot = document.querySelector(".onboarding-root");
 
 function showRestaurant(r) {
@@ -1304,7 +1309,7 @@ function askConfirm(title, desc, yesLabel, onYes) {
   openPopup(confirmPopupRoot);
 }
 
-const allPopups = [devPopupRoot, medicalPopupRoot, restaurantPopupRoot, paywallPopupRoot, cgmPopupRoot, settingsRoot, loginRoot, composePopupRoot, repliesPopupRoot, chatPopupRoot, profilePopupRoot, confirmPopupRoot, inboxPopupRoot, circlePopupRoot, createCirclePopupRoot];
+const allPopups = [devPopupRoot, medicalPopupRoot, restaurantPopupRoot, paywallPopupRoot, cgmPopupRoot, settingsRoot, loginRoot, composePopupRoot, repliesPopupRoot, chatPopupRoot, profilePopupRoot, confirmPopupRoot, inboxPopupRoot, circlePopupRoot, createCirclePopupRoot, peerProfilePopupRoot];
 
 allPopups.forEach((root) => {
   if (!root) return;
@@ -1950,8 +1955,13 @@ document.addEventListener("click", (event) => {
     if (!currentUser) { openPopup(loginRoot); return; }
     const other = userCache[uid] || { uid: uid, displayName: "貝友", avatar: "🦉" };
     activeChat = other;
-    if (chatAvatar) chatAvatar.textContent = other.avatar || "🦉";
-    if (chatName) chatName.textContent = other.displayName || "貝友";
+    if (chatAvatar) {
+      chatAvatar.textContent = other.avatar || "🦉";
+      chatAvatar.setAttribute("data-action", "view-peer");
+      chatAvatar.setAttribute("data-uid", uid);
+      chatAvatar.style.cursor = "pointer";
+    }
+    if (chatName) chatName.innerHTML = esc(other.displayName || "貝友") + " " + roleBadgeHTML(other.official, other.role);
     if (chatText) chatText.value = "";
     if (chatMessages) chatMessages.innerHTML = '<p class="chat-empty">載入中…</p>';
     const convId = [currentUser.uid, uid].sort().join("__");
@@ -1983,10 +1993,13 @@ document.addEventListener("click", (event) => {
         text: text,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
-      db.collection("conversations").doc(convId).set(
-        { updatedAt: firebase.firestore.FieldValue.serverTimestamp(), lastText: text, lastSenderUid: currentUser.uid },
-        { merge: true }).catch(() => {});
-      markConvRead(convId);
+      db.collection("conversations").doc(convId).update({
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastText: text,
+        lastSenderUid: currentUser.uid,
+        ["unread." + activeChat.uid]: firebase.firestore.FieldValue.increment(1),
+        ["unread." + currentUser.uid]: 0,
+      }).catch(() => {});
     } catch (e) {
       showToast("訊息送出失敗");
     }
@@ -1995,21 +2008,20 @@ document.addEventListener("click", (event) => {
   // ===== 私訊收件匣 =====
   let myConversations = [];
   let inboxUnsub = null;
-  function readKey(convId) { return "beta_read_" + convId; }
-  function convUnread(c, uid) {
-    if (!c.lastSenderUid || c.lastSenderUid === uid) return false;
-    const updated = (c.updatedAt && c.updatedAt.toMillis) ? c.updatedAt.toMillis() : 0;
-    const read = parseInt(localStorage.getItem(readKey(c.id)) || "0", 10);
-    return updated > read;
+  function convUnreadCount(c, uid) {
+    return (c.unread && typeof c.unread[uid] === "number") ? c.unread[uid] : 0;
   }
   function recomputeInboxUnread() {
     const uid = currentUser && currentUser.uid;
-    inboxUnread = !!uid && myConversations.some((c) => convUnread(c, uid));
+    let total = 0;
+    if (uid) myConversations.forEach((c) => { total += convUnreadCount(c, uid); });
+    inboxUnreadCount = total;
+    inboxUnread = total > 0;
     if (currentPage === "community") render("community");
   }
   function markConvRead(convId) {
-    try { localStorage.setItem(readKey(convId), String(Date.now())); } catch (e) {}
-    recomputeInboxUnread();
+    if (!db || !currentUser) return;
+    db.collection("conversations").doc(convId).update({ ["unread." + currentUser.uid]: 0 }).catch(() => {});
   }
   function subscribeInbox(uid) {
     if (inboxUnsub) { inboxUnsub(); inboxUnsub = null; }
@@ -2042,14 +2054,14 @@ document.addEventListener("click", (event) => {
     box.innerHTML = list.map((c) => {
       const other = (c.participants || []).find((p) => p !== uid);
       const u = userCache[other] || { displayName: "貝友", avatar: "🦉" };
-      const unread = convUnread(c, uid);
+      const cnt = convUnreadCount(c, uid);
       return `<button class="inbox-item" type="button" data-action="open-chat" data-uid="${esc(other)}">
-        ${avatarCircle(u.avatar)}
+        <span class="avatar-emoji">${esc(u.avatar || "🦉")}</span>
         <div class="inbox-item-body">
-          <div class="inbox-item-top"><strong>${esc(u.displayName || "貝友")}</strong><span class="inbox-time">${esc(timeAgo(c.updatedAt))}</span></div>
-          <p class="inbox-snippet${unread ? " unread" : ""}">${esc(c.lastText || "（還沒有訊息）")}</p>
+          <div class="inbox-item-top"><strong>${esc(u.displayName || "貝友")} ${roleBadgeHTML(u.official, u.role)}</strong><span class="inbox-time">${esc(timeAgo(c.updatedAt))}</span></div>
+          <p class="inbox-snippet${cnt > 0 ? " unread" : ""}">${esc(c.lastText || "（還沒有訊息）")}</p>
         </div>
-        ${unread ? '<span class="inbox-dot"></span>' : ""}
+        ${cnt > 0 ? `<span class="inbox-count">${cnt > 99 ? "99+" : cnt}</span>` : ""}
       </button>`;
     }).join("");
   }
@@ -2057,6 +2069,44 @@ document.addEventListener("click", (event) => {
     if (!currentUser) { openPopup(loginRoot); return; }
     renderInbox();
     openPopup(inboxPopupRoot);
+  }
+
+  // 點頭像 → 看對方的個人檔案（頭貼、暱稱、身分、簡介、ID）
+  async function openPeerProfile(uid) {
+    if (!uid) return;
+    let u = userCache[uid];
+    if ((!u || !u.betaId) && db) {
+      try {
+        const d = await db.collection("users").doc(uid).get();
+        if (d.exists) { u = Object.assign({ uid: uid }, d.data()); userCache[uid] = u; }
+      } catch (e) {}
+    }
+    if (!u) { showToast("找不到這位貝友"); return; }
+    const root = peerProfilePopupRoot;
+    if (!root) return;
+    const setText = (sel, txt) => { const el = root.querySelector(sel); if (el) el.textContent = txt; };
+    setText("[data-peer-avatar]", u.avatar || "🦉");
+    setText("[data-peer-name]", u.displayName || "貝友");
+    const badge = root.querySelector("[data-peer-badge]");
+    if (badge) badge.innerHTML = roleBadgeHTML(u.official, u.role);
+    const bio = root.querySelector("[data-peer-bio]");
+    if (bio) {
+      const ok = hasRealText(u.bio);
+      bio.textContent = ok ? u.bio : "（這位貝友還沒寫簡介）";
+      bio.classList.toggle("is-empty", !ok);
+    }
+    setText("[data-peer-id]", u.betaId || "----");
+    const actions = root.querySelector("[data-peer-actions]");
+    if (actions) {
+      if (uid === betaCurrentUid) {
+        actions.innerHTML = '<p class="chat-empty">這是你自己 😉</p>';
+      } else if (myFriends.indexOf(uid) !== -1) {
+        actions.innerHTML = `<button class="login-primary" type="button" data-action="open-chat" data-uid="${esc(uid)}">💬 傳訊息</button>`;
+      } else {
+        actions.innerHTML = `<button class="login-primary" type="button" data-action="add-friend" data-uid="${esc(uid)}">＋ 加好友</button>`;
+      }
+    }
+    openPopup(peerProfilePopupRoot);
   }
 
   // ===== 互助圈（聊天室 + 貼文牆） =====
@@ -2102,7 +2152,7 @@ document.addEventListener("click", (event) => {
         msgBox.innerHTML = snap.docs.map((d) => {
           const m = d.data();
           const mine = currentUser && m.senderUid === currentUser.uid;
-          return `<div class="circle-msg ${mine ? "me" : "them"}">${mine ? "" : `<span class="circle-msg-name">${esc(m.senderName || "貝友")}</span>`}<div class="chat-bubble ${mine ? "me" : "them"}">${esc(m.text)}</div></div>`;
+          return `<div class="circle-msg ${mine ? "me" : "them"}">${mine ? "" : `<span class="circle-msg-name">${esc(m.senderName || "貝友")} ${roleBadgeHTML(m.senderOfficial, m.senderRole)}</span>`}<div class="chat-bubble ${mine ? "me" : "them"}">${esc(m.text)}</div></div>`;
         }).join("");
         msgBox.scrollTop = msgBox.scrollHeight;
       }, () => { if (msgBox) msgBox.innerHTML = '<p class="chat-empty">訊息載入失敗</p>'; });
@@ -2117,7 +2167,7 @@ document.addEventListener("click", (event) => {
           const canDel = betaCurrentUid && (p.uid === betaCurrentUid || amOfficial);
           return `<article class="card post-card" style="margin-bottom:8px">
             <div class="post-card-head">
-              <div class="post-author">${avatarCircle(p.authorAvatar)}<div><h3>${esc(p.author || "貝友")} ${roleBadgeHTML(p.authorOfficial, p.authorRole)}</h3><span class="unit">${esc(timeAgo(p.createdAt))}</span></div></div>
+              <div class="post-author">${avatarCircle(p.authorAvatar, p.uid)}<div><h3>${esc(p.author || "貝友")} ${roleBadgeHTML(p.authorOfficial, p.authorRole)}</h3><span class="unit">${esc(timeAgo(p.createdAt))}</span></div></div>
               ${canDel ? `<button class="post-del-btn" type="button" data-action="circle-post-del" data-cid="${esc(circle.id)}" data-pid="${esc(d.id)}" title="刪除">🗑</button>` : ""}
             </div>
             <p style="color:var(--ink)">${esc(p.content)}</p>
@@ -2138,6 +2188,8 @@ document.addEventListener("click", (event) => {
         senderUid: currentUser.uid,
         senderName: currentUser.displayName || "貝友",
         senderAvatar: myAvatar(),
+        senderOfficial: !!(myProfile && myProfile.official),
+        senderRole: (myProfile && myProfile.role) || null,
         text: text,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
@@ -2263,6 +2315,8 @@ document.addEventListener("click", (event) => {
       return;
     }
     if (event.target.closest("[data-action='open-inbox']")) { openInbox(); return; }
+    const peerBtn = event.target.closest("[data-action='view-peer']");
+    if (peerBtn) { openPeerProfile(peerBtn.getAttribute("data-uid")); return; }
     const circleBtn = event.target.closest("[data-action='open-circle']");
     if (circleBtn) {
       openCircle({ id: circleBtn.getAttribute("data-id"), name: circleBtn.getAttribute("data-name"), emoji: circleBtn.getAttribute("data-emoji") });
