@@ -38,10 +38,10 @@ service cloud.firestore {
         && request.resource.data.content.size() > 0
         && request.resource.data.content.size() <= 500;
 
-      // 作者改自己的；任何登入者只能改 replyCount；官方版主可改
+      // 作者改自己的；任何登入者只能改 replyCount / 按讚欄位；官方版主可改
       allow update: if isSignedIn() && (
         resource.data.uid == request.auth.uid
-        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount'])
+        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyCount', 'reactions', 'reactedBy'])
         || isOfficial()
       );
 

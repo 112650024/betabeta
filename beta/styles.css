@@ -2822,7 +2822,7 @@ button.chip:active {
   font-weight: 900;
   animation: obSpark 2.4s ease-in-out infinite;
 }
-.illus-ai .ob-spark::before { content: "✦"; }
+.illus-ai .ob-spark::before { content: "✨"; }
 .illus-ai .spark-1 { top: 18px; left: 18px; animation-delay: 0s; }
 .illus-ai .spark-2 { top: 22px; right: 18px; animation-delay: 0.6s; }
 .illus-ai .spark-3 { bottom: 18px; left: 30px; animation-delay: 1.2s; }
@@ -3672,9 +3672,29 @@ button.chip:active {
 .inbox-entry-body h3 .inbox-count { display: inline-block; }
 
 /* 對方個人檔案彈窗 */
-.peer-actions { margin-top: 18px; }
+.peer-actions { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
 .peer-actions .login-primary { width: 100%; margin-top: 0; }
 .profile-bio-text.is-empty { opacity: 0.55; font-style: italic; }
+.peer-meta { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+.peer-remove-btn {
+  width: 100%; padding: 11px 0; border-radius: 12px;
+  border: 1.5px solid var(--line); background: #fff; color: #c0392b;
+  font-size: 13.5px; font-weight: 800; cursor: pointer; font-family: inherit;
+  transition: background 150ms ease, transform 120ms ease;
+}
+.peer-remove-btn:hover { background: rgba(214, 69, 47, 0.08); }
+.peer-remove-btn:active { transform: scale(0.97); }
+
+/* 貼文按讚 */
+.like-btn {
+  border: 0; background: transparent; cursor: pointer;
+  font-size: 12.5px; color: var(--muted); font-weight: 700; font-family: inherit;
+  padding: 4px 8px; border-radius: 999px;
+  transition: background 150ms ease, color 150ms ease, transform 120ms ease;
+}
+.like-btn:hover { background: var(--beta-soft); }
+.like-btn:active { transform: scale(1.15); }
+.like-btn.liked { color: var(--beta-dark); background: var(--beta-soft); }
 
 /* 互助圈彈窗 */
 .circle-popup { display: flex; flex-direction: column; }

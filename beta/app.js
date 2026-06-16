@@ -192,7 +192,7 @@ const BOSS_EMAIL = "k@beta.com";
 const AVATAR_GROUPS = [
   { name: "動物", emojis: ["🦉", "🐱", "🐰", "🐶", "🦊", "🐻", "🐼", "🐨", "🦁", "🐯", "🐸", "🐵", "🐳", "🦄", "🐧", "🐢", "🦋", "🐝", "🐙", "🦖"] },
   { name: "食物", emojis: ["🍎", "🍊", "🍋", "🍓", "🍇", "🍉", "🍑", "🥑", "🥕", "🌽", "🍞", "🥐", "🍙", "🍜", "🍣", "🍩", "🍪", "🧁", "🍵", "🧋"] },
-  { name: "表情", emojis: ["😀", "😎", "🤓", "🥳", "😺", "👻", "🤖", "🦸", "🧙", "🧛", "🥰", "😇", "🤠", "🫶", "😴", "🤩", "😤", "🙃", "😏", "🤗"] },
+  { name: "表情", emojis: ["😀", "😎", "🤓", "🥳", "😺", "👻", "🤖", "🦸", "🧙", "🧛", "🥰", "😇", "🤠", "😘", "😴", "🤩", "😤", "🙃", "😏", "🤗"] },
   { name: "符號", emojis: ["⭐", "🌟", "💫", "🔥", "💧", "🌈", "⚡", "❄️", "🌸", "🌻", "🌙", "☀️", "💎", "👑", "🎯", "🏆", "🛡️", "💜", "💙", "💚"] },
   { name: "節慶", emojis: ["🎃", "🎄", "🎁", "🎈", "🎉", "🎊", "🧧", "🎏", "🎀", "🪄", "🌺", "🪷", "🎐", "🥂", "🍰", "🎂", "🪅", "🎆", "🌷", "💐"] },
 ];
@@ -311,8 +311,8 @@ function renderCircles() {
     : circles.map((c, i) => ({ id: "demo-" + i, name: c.title, desc: c.body, emoji: c.emoji, tone: c.tone, memberHint: c.members }));
   const cards = list
     .map((c) => `
-      <button class="card insight-card circle-card" type="button" data-action="open-circle" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-emoji="${esc(c.emoji || "🫶")}">
-        <span class="circle-emoji ${esc(c.tone || "blue")}">${esc(c.emoji || "🫶")}</span>
+      <button class="card insight-card circle-card" type="button" data-action="open-circle" data-id="${esc(c.id)}" data-name="${esc(c.name)}" data-emoji="${esc(c.emoji || "🤝")}">
+        <span class="circle-emoji ${esc(c.tone || "blue")}">${esc(c.emoji || "🤝")}</span>
         <span class="circle-body">
           <span class="row-between"><h3>${esc(c.name)}</h3><span class="unit">${esc(c.memberHint || "點進來聊聊")}</span></span>
           <p>${esc(c.desc || "")}</p>
@@ -397,6 +397,12 @@ function postCardHTML(post, i, amOfficial) {
   const delBtn = canDelete
     ? `<button class="post-del-btn" type="button" data-action="delete-post" data-id="${esc(post.id)}" aria-label="刪除貼文" title="刪除">🗑</button>`
     : "";
+  const reactedBy = Array.isArray(post.reactedBy) ? post.reactedBy : [];
+  const iReacted = !!betaCurrentUid && reactedBy.indexOf(betaCurrentUid) !== -1;
+  const likeN = reactedBy.length || (typeof post.reactions === "number" ? post.reactions : 0);
+  const likeBtn = post.id
+    ? `<button class="like-btn${iReacted ? " liked" : ""}" type="button" data-action="toggle-like" data-id="${esc(post.id)}">👍 ${likeN > 0 ? likeN + " 人覺得有幫助" : "覺得有幫助"}</button>`
+    : `<span class="unit">👍 ${esc(reactionText(post.reactions))}</span>`;
   return `
     <article class="card post-card${post.pinned ? " is-pinned" : ""}" style="animation: rise .42s cubic-bezier(0.22,1,0.36,1) both; animation-delay: ${i * 45}ms">
       <div class="post-card-head">
@@ -411,7 +417,7 @@ function postCardHTML(post, i, amOfficial) {
       </div>
       <p style="color: var(--ink)">${esc(post.content)}</p>
       <div class="row-between">
-        <span class="unit">👍 ${esc(reactionText(post.reactions))}</span>
+        ${likeBtn}
         <button class="mini-tag mini-tag-btn" type="button" data-action="open-replies" data-id="${esc(post.id)}">💬 回覆${post.replyCount ? " " + post.replyCount : ""}</button>
       </div>
     </article>
@@ -1115,7 +1121,7 @@ function mealCard(meal) {
   const c1x = xs[0] + (xs[1] - xs[0]) / 2;
   const c2x = xs[1] + (xs[2] - xs[1]) / 2;
   const path = `M ${xs[0]} ${ys[0]} C ${c1x} ${ys[0]}, ${c1x} ${ys[1]}, ${xs[1]} ${ys[1]} C ${c2x} ${ys[1]}, ${c2x} ${ys[2]}, ${xs[2]} ${ys[2]}`;
-  const trendIcon = meal.tone === "green" ? "↗" : meal.tone === "orange" ? "⚠" : "📈";
+  const trendIcon = meal.tone === "green" ? "↗️" : meal.tone === "orange" ? "⚠️" : "📈";
   return `
     <button class="card meal-card" type="button" data-action="dev">
       <div class="meal-card-head">
@@ -2096,12 +2102,15 @@ document.addEventListener("click", (event) => {
       bio.classList.toggle("is-empty", !ok);
     }
     setText("[data-peer-id]", u.betaId || "----");
+    const meta = root.querySelector("[data-peer-meta]");
+    if (meta) meta.textContent = "👥 " + ((u.friends && u.friends.length) || 0) + " 位好友";
     const actions = root.querySelector("[data-peer-actions]");
     if (actions) {
       if (uid === betaCurrentUid) {
         actions.innerHTML = '<p class="chat-empty">這是你自己 😉</p>';
       } else if (myFriends.indexOf(uid) !== -1) {
-        actions.innerHTML = `<button class="login-primary" type="button" data-action="open-chat" data-uid="${esc(uid)}">💬 傳訊息</button>`;
+        actions.innerHTML = `<button class="login-primary" type="button" data-action="open-chat" data-uid="${esc(uid)}">💬 傳訊息</button>
+          <button class="peer-remove-btn" type="button" data-action="remove-friend" data-uid="${esc(uid)}">移除好友</button>`;
       } else {
         actions.innerHTML = `<button class="login-primary" type="button" data-action="add-friend" data-uid="${esc(uid)}">＋ 加好友</button>`;
       }
@@ -2138,7 +2147,7 @@ document.addEventListener("click", (event) => {
     const nameEl = root.querySelector("[data-circle-name]");
     const emoEl = root.querySelector("[data-circle-emoji]");
     if (nameEl) nameEl.textContent = circle.name || "互助圈";
-    if (emoEl) emoEl.textContent = circle.emoji || "🫶";
+    if (emoEl) emoEl.textContent = circle.emoji || "🤝";
     circleSwitchTab("chat");
     const msgBox = root.querySelector("[data-circle-messages]");
     const postBox = root.querySelector("[data-circle-posts]");
@@ -2232,7 +2241,7 @@ document.addEventListener("click", (event) => {
       await db.collection("circles").add({
         name: name,
         desc: ((descEl && descEl.value) || "").trim(),
-        emoji: (((emoEl && emoEl.value) || "").trim()) || "🫶",
+        emoji: (((emoEl && emoEl.value) || "").trim()) || "🤝",
         tone: ["orange", "green", "blue"][Math.floor(Math.random() * 3)],
         createdBy: currentUser.uid,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -2314,9 +2323,35 @@ document.addEventListener("click", (event) => {
       }
       return;
     }
+    const likeBtn = event.target.closest("[data-action='toggle-like']");
+    if (likeBtn) {
+      if (!currentUser) { openPopup(loginRoot); return; }
+      const id = likeBtn.getAttribute("data-id");
+      const p = livePosts.find((x) => x.id === id);
+      const reacted = p && Array.isArray(p.reactedBy) && p.reactedBy.indexOf(betaCurrentUid) !== -1;
+      if (id && db) {
+        db.collection("posts").doc(id).update({
+          reactedBy: reacted ? firebase.firestore.FieldValue.arrayRemove(betaCurrentUid) : firebase.firestore.FieldValue.arrayUnion(betaCurrentUid),
+          reactions: firebase.firestore.FieldValue.increment(reacted ? -1 : 1),
+        }).catch(() => showToast("操作失敗（記得發布最新規則）"));
+      }
+      return;
+    }
     if (event.target.closest("[data-action='open-inbox']")) { openInbox(); return; }
     const peerBtn = event.target.closest("[data-action='view-peer']");
     if (peerBtn) { openPeerProfile(peerBtn.getAttribute("data-uid")); return; }
+    const rmFriendBtn = event.target.closest("[data-action='remove-friend']");
+    if (rmFriendBtn) {
+      const ruid = rmFriendBtn.getAttribute("data-uid");
+      if (ruid && db && currentUser) {
+        askConfirm("移除這位好友？", "你們的對話紀錄不會消失，只是從好友清單移除", "移除", () => {
+          db.collection("users").doc(currentUser.uid).update({ friends: firebase.firestore.FieldValue.arrayRemove(ruid) })
+            .then(() => { showToast("已移除好友"); closePopup(peerProfilePopupRoot); })
+            .catch(() => showToast("操作失敗"));
+        });
+      }
+      return;
+    }
     const circleBtn = event.target.closest("[data-action='open-circle']");
     if (circleBtn) {
       openCircle({ id: circleBtn.getAttribute("data-id"), name: circleBtn.getAttribute("data-name"), emoji: circleBtn.getAttribute("data-emoji") });
