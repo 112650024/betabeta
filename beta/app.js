@@ -90,65 +90,168 @@ const aiReports = {
   },
 };
 
+// 北科大（億光大樓）周邊真實店家 — 加上「血糖友善」角度（店名來自網路資料，Demo 前請再確認）
+const NTUT_LOC = { lat: 25.0425, lng: 121.5363 }; // 北科大億光大樓附近
 const restaurants = [
   {
-    name: "穩穩食堂",
-    distance: "350 m",
-    rating: "4.8",
-    dishes: ["雞胸溫沙拉", "半飯糙米便當", "無糖豆漿"],
-    note: "12 位貝友回報：餐後 2 小時多維持在目標範圍。",
+    name: "光合箱子 Daylight（華山店）",
+    lat: 25.0440, lng: 121.5300, distance: "約 400 m",
+    rating: "4.7", bsLevel: "good",
+    advice: "沙拉碗加雞胸、醬料分開放——餐後最穩的選擇。",
+    dishes: ["蔬菜沙拉碗", "雞胸蛋白", "醬料分開"],
+    note: "大量生菜＋可選蛋白質，精緻澱粉少。",
     breakdown: [
-      { label: "餐後血糖反應", score: 4.9 },
-      { label: "客製化彈性", score: 4.8 },
-      { label: "食材新鮮度", score: 4.7 },
-      { label: "用餐環境", score: 4.6 },
+      { label: "餐後血糖反應", score: 4.8 },
+      { label: "份量可控制", score: 4.7 },
+      { label: "蔬菜/纖維量", score: 4.9 },
+      { label: "精緻澱粉少", score: 4.5 },
     ],
     voices: [
-      "「半飯糙米便當吃完 2 小時血糖只升 22，真的很穩。」— T2D 6 年用戶",
-      "「願意幫我把飯量再砍半，店員不會白眼。」— T1D 用戶",
-      "「無糖豆漿是真的無糖，我餐前測過了。」— 衛教師見證",
+      "「全沙拉碗＋雞胸，2 小時血糖只升 18。」— T2D 用戶",
+      "「醬料記得請店家分開，油醋比凱薩穩。」— 衛教師",
+      "「華山逛完直接來，離北科走路 5 分鐘。」— T1D 用戶",
     ],
   },
   {
-    name: "小禾低 GI 廚房",
-    distance: "620 m",
-    rating: "4.3",
-    dishes: ["藜麥鮭魚碗", "蔬菜加量", "飯量半份"],
-    note: "多數回饋指出上升較平緩，適合午餐時段。",
+    name: "北科學生餐廳自助餐（光華館）",
+    lat: 25.0427, lng: 121.5352, distance: "校內 約 150 m",
+    rating: "4.5", bsLevel: "good",
+    advice: "自助餐最大優勢是你能自己配——青菜夾滿、飯只裝半碗。",
+    dishes: ["燙青菜多選", "白肉/豆腐", "飯半碗"],
+    note: "可自選配菜、控制份量，校內走路就到。",
     breakdown: [
-      { label: "餐後血糖反應", score: 4.5 },
-      { label: "客製化彈性", score: 4.3 },
-      { label: "食材新鮮度", score: 4.4 },
-      { label: "用餐環境", score: 4.0 },
+      { label: "餐後血糖反應", score: 4.4 },
+      { label: "份量可控制", score: 4.9 },
+      { label: "蔬菜/纖維量", score: 4.6 },
+      { label: "精緻澱粉少", score: 4.0 },
     ],
     voices: [
-      "「藜麥取代白飯後，2 小時峰值降 30 mg/dL。」— T2D 用戶",
-      "「店面比較小、要排隊，但餐點品質穩定。」— 一般用戶",
-      "「醬料偏甜可請店家少放，要主動講。」— T1D 用戶",
+      "「自助餐我都先夾兩格青菜再裝半碗飯，超穩。」— T2D 用戶",
+      "「便宜又能控份量，學生首選。」— 北科貝友",
+      "「避開勾芡和糖醋類就好。」— 衛教師",
     ],
   },
   {
-    name: "慢慢吃早午餐",
-    distance: "900 m",
-    rating: "4.6",
-    dishes: ["蛋白質拼盤", "酪梨蛋沙拉", "無糖優格"],
-    note: "貝友建議：醬料分開放，飯後血糖較穩。",
+    name: "以馬內利鮮魚湯",
+    lat: 25.0411, lng: 121.5335, distance: "約 500 m",
+    rating: "4.3", bsLevel: "good",
+    advice: "鮮魚高蛋白、湯品清爽；炒麵改半份或免，再加燙青菜。",
+    dishes: ["鮮魚湯", "燙青菜", "炒麵減半"],
+    note: "蛋白質足、清爽，澱粉自己控制。",
     breakdown: [
-      { label: "餐後血糖反應", score: 4.7 },
-      { label: "客製化彈性", score: 4.6 },
-      { label: "食材新鮮度", score: 4.8 },
-      { label: "用餐環境", score: 4.5 },
+      { label: "餐後血糖反應", score: 4.4 },
+      { label: "份量可控制", score: 4.2 },
+      { label: "蔬菜/纖維量", score: 4.0 },
+      { label: "精緻澱粉少", score: 4.3 },
     ],
     voices: [
-      "「酪梨蛋沙拉早餐後血糖一直線。」— T1D 用戶",
-      "「店家會主動把醬料分開放，加分。」— 衛教師見證",
-      "「無糖優格選歐式那款比希臘式更平穩。」— 飲控達人",
+      "「魚湯配燙青菜，炒麵只吃一半，餐後很平。」— T2D 用戶",
+      "「蛋白質夠飽，不會等等又想吃。」— 一般用戶",
+      "「湯頭不會死鹹，加分。」— 北科貝友",
+    ],
+  },
+  {
+    name: "臨沂殿（火鍋）",
+    lat: 25.0446, lng: 121.5312, distance: "約 550 m",
+    rating: "3.8", bsLevel: "ok",
+    advice: "火鍋可很友善也可很雷——多放菜＋肉＋豆腐，避開冬粉/王子麵，沾醬別調糖。",
+    dishes: ["多放蔬菜", "肉/海鮮/豆腐", "避開冬粉"],
+    note: "鍋物彈性大，關鍵在澱粉料和沾醬。",
+    breakdown: [
+      { label: "餐後血糖反應", score: 3.7 },
+      { label: "份量可控制", score: 4.2 },
+      { label: "蔬菜/纖維量", score: 4.3 },
+      { label: "精緻澱粉少", score: 3.0 },
+    ],
+    voices: [
+      "「不加王子麵、沾醬只用蔥薑蒜，火鍋也能很穩。」— T1D 用戶",
+      "「南瓜芋頭玉米都算澱粉，要記得算進去。」— 衛教師",
+      "「聚餐首選，能慢慢吃。」— 北科貝友",
+    ],
+  },
+  {
+    name: "元味便當",
+    lat: 25.0421, lng: 121.5376, distance: "約 300 m",
+    rating: "3.6", bsLevel: "ok",
+    advice: "便當白飯份量偏大、配菜少——點半飯、先吃菜和肉、餐後散步 10 分鐘。",
+    dishes: ["半飯", "先吃菜/肉", "餐後散步"],
+    note: "方便快速，但要主動控飯量。",
+    breakdown: [
+      { label: "餐後血糖反應", score: 3.4 },
+      { label: "份量可控制", score: 3.5 },
+      { label: "蔬菜/纖維量", score: 3.2 },
+      { label: "精緻澱粉少", score: 2.8 },
+    ],
+    voices: [
+      "「跟老闆說飯裝一半，餐後高峰差很多。」— T2D 用戶",
+      "「先吃菜跟主菜，最後再吃飯比較穩。」— 衛教師",
+      "「趕時間很方便，缺點是青菜偏少。」— 北科貝友",
+    ],
+  },
+  {
+    name: "喬喜蛋炒飯",
+    lat: 25.0447, lng: 121.5348, distance: "約 450 m",
+    rating: "3.0", bsLevel: "care",
+    advice: "蛋炒飯＝精緻澱粉＋油＋大份量，餐後容易飆。要吃就點小份、配無糖飲、避免加糖醬。",
+    dishes: ["點小份", "搭無糖飲", "加燙青菜"],
+    note: "好吃但血糖挑戰大，份量與配料要很節制。",
+    breakdown: [
+      { label: "餐後血糖反應", score: 2.6 },
+      { label: "份量可控制", score: 3.2 },
+      { label: "蔬菜/纖維量", score: 2.4 },
+      { label: "精緻澱粉少", score: 2.0 },
+    ],
+    voices: [
+      "「一份炒飯餐後直接破 200，後來都點小份。」— T2D 用戶",
+      "「真的想吃就配一份燙青菜先墊。」— 衛教師",
+      "「份量大、CP 值高，但要忍住別配含糖飲。」— 北科貝友",
     ],
   },
 ];
 
 function ratingTier(rating) {
   return parseFloat(rating) >= 4.5 ? "top" : "mid";
+}
+
+let myLoc = null; // 使用者實際定位（按「找我附近」後填入）
+function haversineM(a, b) {
+  const R = 6371000, toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat), dLng = toRad(b.lng - a.lng);
+  const s = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(a.lat)) * Math.cos(toRad(b.lat)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+function fmtDist(m) {
+  if (m < 1000) return "約 " + Math.round(m / 10) * 10 + " m";
+  return "約 " + (m / 1000).toFixed(1) + " km";
+}
+// 依使用者位置排序餐廳（沒定位就用原順序），回傳 {r, i(原索引), dist}
+function nearbyRestaurantsSorted() {
+  const arr = restaurants.map((r, i) => {
+    const m = (myLoc && r.lat) ? haversineM(myLoc, r) : 1e9 + i;
+    const dist = (myLoc && r.lat) ? fmtDist(m) : r.distance;
+    return { r: r, i: i, dist: dist, m: m };
+  });
+  if (myLoc) arr.sort((a, b) => a.m - b.m);
+  return arr;
+}
+function geoStatusText() {
+  if (!myLoc) return "";
+  const d = haversineM(myLoc, NTUT_LOC);
+  if (d < 800) return "📍 你在北科大億光大樓附近，以下依距離排序 👇";
+  return "📍 已定位（離北科大 " + fmtDist(d) + "），以下是北科周邊示範清單。";
+}
+function locateMe() {
+  if (!navigator.geolocation) { showToast("這個瀏覽器不支援定位"); return; }
+  showToast("定位中…");
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      myLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      showToast("已定位 📍");
+      if (currentPage === "map") render("map");
+    },
+    () => { showToast("定位失敗，請允許位置權限再試一次"); },
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+  );
 }
 
 const peers = [
@@ -534,24 +637,28 @@ const insightCard = ({ title, body, icon, tone }) => `
   </article>
 `;
 
-const restaurantCard = (restaurant, idx) => {
-  const tier = ratingTier(restaurant.rating);
+const BS_META = {
+  good: { label: "血糖友善", cls: "bs-good", icon: "🟢" },
+  ok: { label: "可斟酌", cls: "bs-ok", icon: "🟡" },
+  care: { label: "要注意", cls: "bs-care", icon: "🔴" },
+};
+const restaurantCard = (restaurant, idx, distOverride) => {
+  const meta = BS_META[restaurant.bsLevel] || BS_META.ok;
+  const dist = distOverride || restaurant.distance;
   return `
   <button class="card restaurant-card" type="button" data-action="restaurant" data-idx="${idx}">
     <div class="row-between">
       <div>
         <h3>${esc(restaurant.name)}</h3>
-        <p>${esc(restaurant.distance)}</p>
+        <p>📍 ${esc(dist)}</p>
       </div>
-      <span class="rating tier-${tier}">★ ${esc(restaurant.rating)}</span>
+      <span class="bs-badge ${meta.cls}">${meta.icon} ${meta.label} ${esc(restaurant.rating)}</span>
     </div>
-    <div>
-      <span class="muted-label">推薦餐點</span>
-      <div class="tag-stack" style="margin-top: 8px">
-        ${restaurant.dishes.map((dish) => `<span class="mini-tag">${esc(dish)}</span>`).join("")}
-      </div>
+    <p class="bs-advice">💡 ${esc(restaurant.advice)}</p>
+    <div class="tag-stack" style="margin-top: 6px">
+      ${restaurant.dishes.map((dish) => `<span class="mini-tag">${esc(dish)}</span>`).join("")}
     </div>
-    <p>👥 ${esc(restaurant.note)} <span class="restaurant-cta">看評分原因 →</span></p>
+    <p class="restaurant-cta-line">看血糖評分原因 →</p>
   </button>
 `;
 };
@@ -870,6 +977,11 @@ const pages = {
 
       ${chipRow(["低碳", "低 GI", "高蛋白", "飯量可調", "用戶推薦"])}
 
+      <div class="geo-card">
+        <button class="geo-btn" type="button" data-action="locate-me">📍 找我附近的友善餐廳</button>
+        <p class="geo-status">${myLoc ? geoStatusText() : "按一下，用你的位置找附近最友善的選擇（只用這一次、不會儲存你的位置）。"}</p>
+      </div>
+
       <div class="soft-map" aria-label="貝友友善合作商家地圖">
         <span class="map-park" style="left: 8%; top: 8%">
           <span class="park-icon">🌳</span><span class="park-icon">🌲</span><span class="park-icon">🌳</span>
@@ -902,8 +1014,8 @@ const pages = {
 
         <span class="road"></span>
         <span class="road vertical"></span>
-        <span class="road-label" style="left: 8%; top: 55%">和平東路</span>
-        <span class="road-label vertical" style="left: 51%; top: 6%">復興街</span>
+        <span class="road-label" style="left: 8%; top: 55%">忠孝東路三段</span>
+        <span class="road-label vertical" style="left: 51%; top: 6%">建國南路</span>
 
         <span class="me-dot" title="你在這">
           <span class="me-dot-inner">
@@ -928,8 +1040,8 @@ const pages = {
         </button>
       </div>
 
-      <h2 class="section-title">附近合作商家</h2>
-      ${restaurants.map((r, i) => restaurantCard(r, i)).join("")}
+      <h2 class="section-title">${myLoc ? "你附近的友善餐廳" : "北科大周邊友善餐廳"}</h2>
+      ${nearbyRestaurantsSorted().map((x) => restaurantCard(x.r, x.i, x.dist)).join("")}
     </section>
   `,
 
@@ -1201,6 +1313,7 @@ screen.addEventListener("click", (event) => {
     if (!Number.isNaN(idx) && restaurants[idx]) showRestaurant(restaurants[idx]);
     return;
   }
+  if (event.target.closest("[data-action='locate-me']")) { locateMe(); return; }
   const paywall = event.target.closest("[data-action='paywall']");
   if (paywall) {
     openPopup(paywallPopupRoot);
@@ -1236,19 +1349,20 @@ const onboardingRoot = document.querySelector(".onboarding-root");
 
 function showRestaurant(r) {
   if (!restaurantPopupRoot || !restaurantPopupBody) return;
-  const tier = ratingTier(r.rating);
-  const tierLabel = tier === "top" ? "TOP TIER" : "MID TIER";
+  const meta = BS_META[r.bsLevel] || BS_META.ok;
   restaurantPopupBody.innerHTML = `
     <div class="rest-popup-head">
       <div>
         <h3>${esc(r.name)}</h3>
-        <div class="meta">${esc(r.distance)}　·　${r.breakdown.length} 項評分</div>
+        <div class="meta">📍 ${esc(r.distance)}　·　血糖友善評分</div>
       </div>
-      <div class="rest-popup-rating-big tier-${tier}">★ ${esc(r.rating)}<small>${tierLabel}</small></div>
+      <div class="rest-popup-rating-big ${meta.cls}">${esc(r.rating)}<small>${meta.icon} ${meta.label}</small></div>
     </div>
 
+    <div class="rest-popup-advice">💡 血糖建議：${esc(r.advice || "")}</div>
+
     <div class="rest-popup-section">
-      <h4>為什麼是這個分數？</h4>
+      <h4>血糖評分原因</h4>
       ${r.breakdown
         .map((b) => {
           const pct = Math.round((b.score / 5) * 100);
